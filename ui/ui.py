@@ -86,7 +86,7 @@ class panel(ctk.CTkFrame):
         self.pack(fill="both", expand=True)
         
         self.master.title("Control Panel")
-        self.master.geometry("1400x1000") 
+        self.master.geometry("1400x1000+230+30") 
         self.master.resizable(False, False) 
 
         self.buildUi()
@@ -100,17 +100,18 @@ class panel(ctk.CTkFrame):
     
 
     def setup_tabs(self):
-        home_label = ctk.CTkLabel(self.tabview.tab("Home"), text="Welcome Home")
-        home_label.pack(pady=20)
+        
+        #home_label = ctk.CTkLabel(self.tabview.tab("Home"), text="Welcome Home")
+        #home_label.pack(pady=20)
 
-        settings_label = ctk.CTkLabel(self.tabview.tab("Settings"), text="Settings Page")
-        settings_label.pack(pady=20)
+        #settings_label = ctk.CTkLabel(self.tabview.tab("Settings"), text="Settings Page")
+        #settings_label.pack(pady=20)
 
-        profile_label = ctk.CTkLabel(self.tabview.tab("Profile"), text="User Profile")
-        profile_label.pack(pady=20)
+        #profile_label = ctk.CTkLabel(self.tabview.tab("Profile"), text="User Profile")
+        #profile_label.pack(pady=20)
 
-        about_label = ctk.CTkLabel(self.tabview.tab("About"), text="About This App")
-        about_label.pack(pady=20)
+        #about_label = ctk.CTkLabel(self.tabview.tab("About"), text="About This App")
+        #about_label.pack(pady=20)
 
     
     def preferences(self):
@@ -204,11 +205,23 @@ class panel(ctk.CTkFrame):
         btnMode.pack(side="right", padx=20)
 
         self.tabview = ctk.CTkTabview(content, width=750, height=250)
-        self.tabview.pack(padx= 0, pady=20, fill="both", expand=True)
+        self.tabview.pack(padx= 10, pady=20, fill="both", expand=True)
+        self.tabview._segmented_button.configure(
+            font=("helvetica", 20, "bold"),
+            border_width=1,
+            text_color=("#000000", "#ffffff"),
+            text_color_disabled=("#777777", "#777777"),
+            fg_color=("#e0e0e0", "#2a2a2a"),
+            selected_color=("#d0d0d0", "#3a3a3a"),
+            unselected_color=("#f0f0f0", "#1f1f1f"),
+            selected_hover_color=("#c8c8c8", "#444444"),
+            unselected_hover_color=("#dddddd", "#2a2a2a"),
+        )
 
-        self.tabview.add("Home")
-        self.tabview.add("Settings")
-        self.tabview.add("Profile")
-        self.tabview.add("About")
+        self.tabview.add("Set up Device")
+        self.tabview.add("Edit methods")
+        self.tabview.add("Edit commands")
+        self.tabview.add("Run")
+        self.tabview.add("Log")
 
         self.setup_tabs()
