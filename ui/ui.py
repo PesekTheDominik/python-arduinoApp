@@ -3,12 +3,15 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image
 import configparser
+from serial.tools import list_ports
+from databaze.db import *
 
 config = configparser.ConfigParser()
 config.read("settings/settings.ini")
 
 lightImg = ctk.CTkImage(Image.open("images/sun2.png"))
 darkImg = ctk.CTkImage(Image.open("images/moon.png")) 
+texts = ["Set up Device","Edit methods", "Edit commands","Run", "Log"]
 
 currentMode = False
 
@@ -79,6 +82,7 @@ class StableDropdown(tk.Menu):
 
 
 class panel(ctk.CTkFrame):
+    global texts
     def __init__(self, master=None):
         super().__init__(master, fg_color="transparent")
         self.master = master
@@ -98,9 +102,40 @@ class panel(ctk.CTkFrame):
         pref.destroy()
         messagebox.showinfo("succes", "data was saved succesfully")
     
+    def serialPorts(self):
+        ports = list_ports.comports()
+        return [p.device for p in ports]
+
 
     def setup_tabs(self):
-        
+        baudRates = [
+            "300",
+            "1200",
+            "2400",
+            "4800",
+            "9600",
+            "19200",
+            "38400",
+            "57600",
+            "115200",
+            "230400",
+            "460800",
+            "921600",
+        ]
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Select your device profile: ",font=("Segoe UI", 16, "bold")).place(x=30,y=20)
+        profilNames = getProfilName()
+        cbProfil = ctk.CTkComboBox(self.tabview.tab(texts[0]), values=profilNames, state="readonly",font=("Segoe UI", 16, "bold")).place(x=250, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Name: ",font=("Segoe UI", 16, "bold")).place(x=420, y=20)
+        tbName = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=170, height=20,border_width=2, border_color="#1492c4").place(x=480, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Port: ", font=("Segoe UI", 16, "bold")).place(x=670, y=20)
+        ports = self.serialPorts()
+        cbPorts = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=170, height=30, values=ports).place(x=730,y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="BaudRate: ", font=("Segoe UI", 16, "bold")).place(x=920, y=20)
+        cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=170, height=30, values=baudRates).place(x=1020, y=20)
+
+        #tbBaud = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=170, height=20,border_width=2, border_color="#1492c4").place(x=860, y=20)
+        #ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ").place(x=1000, y=20)
+        #tbTest = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=170, height=20,border_width=2, border_color="#1492c4").place(x=1060, y=20)
         #home_label = ctk.CTkLabel(self.tabview.tab("Home"), text="Welcome Home")
         #home_label.pack(pady=20)
 
@@ -155,11 +190,8 @@ class panel(ctk.CTkFrame):
 
         self.file_menu = StableDropdown(self)
         
-        self.file_menu.add_action("New Sketch", "Ctrl+N", lambda: print("New Sketch Created"))
-        self.file_menu.add_action("Open...", "Ctrl+O", lambda: print("Opening file..."))
-        self.file_menu.add_action("Save", "Ctrl+S", lambda: print("Saved successfully"))
         self.file_menu.add_separator()
-        self.file_menu.add_action("Preferences", "Ctrl+,", command=lambda: self.preferences())
+        self.file_menu.add_action("Preferences", "Ctrl+n", command=lambda: self.preferences())
         self.file_menu.add_separator()
         self.file_menu.add_action("Quit", "Ctrl+Q", self.quit)
         
@@ -218,10 +250,12 @@ class panel(ctk.CTkFrame):
             unselected_hover_color=("#dddddd", "#2a2a2a"),
         )
 
-        self.tabview.add("Set up Device")
-        self.tabview.add("Edit methods")
-        self.tabview.add("Edit commands")
-        self.tabview.add("Run")
-        self.tabview.add("Log")
+
+
+        self.tabview.add(texts[0])
+        self.tabview.add(texts[1])
+        self.tabview.add(texts[2])
+        self.tabview.add(texts[3])
+        self.tabview.add(texts[4])
 
         self.setup_tabs()

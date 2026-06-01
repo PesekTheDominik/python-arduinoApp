@@ -24,7 +24,7 @@ def createTables():
             testRes TEXT DEFAULT NULL
         )
     """)
-
+    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS instrument(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,7 +92,22 @@ def addProfil(name, port, baudrate, timeout, testCmd):
     cursor.execute("""
         INSERT INTO profil (name, port, baudrate, timeout, testCmd)
         VALUES (?,?,?,?,?) 
-    """, name, port, baudrate, timeout, testCmd)
+    """, (name, port, baudrate, timeout, testCmd))
+    conn.commit()
+    conn.close()
+
+def getProfilName():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM profil")
+    rows = cursor.fetchall()
+    conn.close()
+    return [row[0] for row in rows]
+
+def clearProfil():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM profil")
     conn.commit()
     conn.close()
 
@@ -102,7 +117,7 @@ def addInstument(name, address):
     cursor.execute("""
         INSERT INTO instrument (name,address)
         VALUES (?,?)
-    """, name, address)
+    """, (name, address))
     conn.commit()
     conn.close()
 
@@ -112,9 +127,17 @@ def addCommands(name,code ,parameter ,info ):
     cursor.execute("""
         INSERT INTO commands (name, code, parameter, info)
         VALUES (?,?,?,?)
-    """, name, code, parameter, info)
+    """, (name, code, parameter, info))
     conn.commit()
     conn.close()
+
+def getCommands():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM commands")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
 
 def addMethod(name, info, dateIn, deleted):
     conn = connect()
@@ -122,7 +145,7 @@ def addMethod(name, info, dateIn, deleted):
     cursor.execute("""
         INSERT INTO method (name, info, dateIn, deleted)
         VALUES (?,?,?,?)
-    """, name, info, dateIn, deleted)
+    """, (name, info, dateIn, deleted))
     conn.commit()
     conn.close()
 
@@ -132,7 +155,7 @@ def addCmd(method, info, time, instrument, command, parameter, code, timeout):
     cursor.execute("""
         INSERT INTO cmdLines (method, info, time, instrument, command, parameter, code, timeout)
         VALUES (?,?,?,?,?,?,?,?)
-    """, method, info, time, instrument, command, parameter, code, timeout)
+    """, (method, info, time, instrument, command, parameter, code, timeout))
 
     conn.commit()
     conn.close()
@@ -143,7 +166,7 @@ def addLog(method ,executed ,info ,time,instrument,command ,parameter ,code ,res
     cursor.execute("""
         INSERT INTO log (method ,executed ,info ,time,instrument,command ,parameter ,code ,response)
         VALUES (?,?,?,?,?,?,?,?,?)
-    """, method ,executed ,info, time, instrument,command ,parameter ,code ,response)
+    """, (method ,executed ,info, time, instrument,command ,parameter ,code ,response))
 
     conn.commit()
     conn.close()
