@@ -108,45 +108,23 @@ class panel(ctk.CTkFrame):
 
 
     def setup_tabs(self):
-        baudRates = [
-            "300",
-            "1200",
-            "2400",
-            "4800",
-            "9600",
-            "19200",
-            "38400",
-            "57600",
-            "115200",
-            "230400",
-            "460800",
-            "921600",
-        ]
+        baudRates = ["300","1200","2400","4800","9600","19200","38400","57600","115200","230400","460800","921600",]
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Select your device profile: ",font=("Segoe UI", 16, "bold")).place(x=30,y=20)
         profilNames = getProfilName()
         cbProfil = ctk.CTkComboBox(self.tabview.tab(texts[0]), values=profilNames, state="readonly",font=("Segoe UI", 16, "bold")).place(x=250, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Name: ",font=("Segoe UI", 16, "bold")).place(x=420, y=20)
-        tbName = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=170, height=20,border_width=2, border_color="#1492c4").place(x=480, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Port: ", font=("Segoe UI", 16, "bold")).place(x=670, y=20)
+        ctk.CTkFrame( self.tabview.tab(texts[0]), width=2, height=40, fg_color="#666666").place(x=420, y=15)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Name: ",font=("Segoe UI", 16, "bold")).place(x=440, y=20)
+        tbName = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=180, height=20,border_width=2, border_color="#1492c4").place(x=500, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Port: ", font=("Segoe UI", 16, "bold")).place(x=730, y=20)
         ports = self.serialPorts()
-        cbPorts = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=170, height=30, values=ports).place(x=730,y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="BaudRate: ", font=("Segoe UI", 16, "bold")).place(x=920, y=20)
-        cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=170, height=30, values=baudRates).place(x=1020, y=20)
+        cbPorts = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=ports,state="readonly").place(x=780,y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="BaudRate: ", font=("Segoe UI", 16, "bold")).place(x=1010, y=20)
+        cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=baudRates, state="readonly").place(x=1100, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=30, y=60)
+        commands = getCommands()
+        cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=commands, state="readonly").place(x=250, y=60)
 
-        #tbBaud = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=170, height=20,border_width=2, border_color="#1492c4").place(x=860, y=20)
-        #ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ").place(x=1000, y=20)
-        #tbTest = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=170, height=20,border_width=2, border_color="#1492c4").place(x=1060, y=20)
-        #home_label = ctk.CTkLabel(self.tabview.tab("Home"), text="Welcome Home")
-        #home_label.pack(pady=20)
 
-        #settings_label = ctk.CTkLabel(self.tabview.tab("Settings"), text="Settings Page")
-        #settings_label.pack(pady=20)
-
-        #profile_label = ctk.CTkLabel(self.tabview.tab("Profile"), text="User Profile")
-        #profile_label.pack(pady=20)
-
-        #about_label = ctk.CTkLabel(self.tabview.tab("About"), text="About This App")
-        #about_label.pack(pady=20)
 
     
     def preferences(self):
@@ -178,8 +156,50 @@ class panel(ctk.CTkFrame):
         ctk.CTkButton(inner, text="Cancel", command=lambda: pref.destroy(), width=200).place(x=30, y=330)
         
 
+    def addCom(self):
+        add = ctk.CTkToplevel(self)
+        add.geometry("900x800+400+200")
+        add.overrideredirect(True)
+        add.configure(fg_color=("#f0f0f0","#1c1c1c"), corner_radius=50)   
+        outer = ctk.CTkFrame(add, fg_color=("#1c1c1c", "#f0f0f0"), corner_radius=3)
+        outer.pack(fill="both", expand=True, padx=4, pady=4)
 
+        inner = ctk.CTkFrame(outer, fg_color=("#f0f0f0","#1c1c1c"), corner_radius=4)
+        inner.pack(fill="both", expand=True, padx=2, pady=2)          
+        ctk.CTkLabel(add, text="Add commands", font=("Helvetica", 46, "bold")).place(x=30, y=20)
 
+        tree = ttk.Treeview(
+            add,
+            columns=("name", "code", "parameter", "info"),
+            show="headings"
+        )
+
+        tree.heading("name", text="name")
+        tree.heading("code", text="code")
+        tree.heading("parameter", text="parameter")
+        tree.heading("info", text="info")
+
+        rows = getCommands()
+
+        for row in rows:
+            name = row[1]
+            code = row[2]
+            parameter = row[3]
+            info = row[4]
+            tree.insert("","end", values=(name, code, parameter, info))
+
+        tree.place(x=20, y=100, width=850, height=300)
+        scrollbar = ttk.Scrollbar(
+            add,
+            orient="vertical",
+            command=tree.yview
+        )
+
+        tree.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.place(x=850, y=100, height=300)
+        ctk.CTkLabel(add, text="name: ", font=("Segoe UI", 16, "bold")).place(x=30, y=420)
+        tbComName = ctk.CTkTextbox(add, width=180, height=20,border_width=2, border_color="#1492c4").place(x=100, y=420)
 
     def buildUi(self):
         global currentMode
@@ -191,6 +211,7 @@ class panel(ctk.CTkFrame):
         self.file_menu = StableDropdown(self)
         
         self.file_menu.add_separator()
+        self.file_menu.add_action("add Commands", "ctrl+a", command=lambda: self.addCom())
         self.file_menu.add_action("Preferences", "Ctrl+n", command=lambda: self.preferences())
         self.file_menu.add_separator()
         self.file_menu.add_action("Quit", "Ctrl+Q", self.quit)
