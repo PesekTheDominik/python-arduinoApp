@@ -198,8 +198,16 @@ class panel(ctk.CTkFrame):
         tree.configure(yscrollcommand=scrollbar.set)
 
         scrollbar.place(x=850, y=100, height=300)
-        ctk.CTkLabel(add, text="name: ", font=("Segoe UI", 16, "bold")).place(x=30, y=420)
-        tbComName = ctk.CTkTextbox(add, width=180, height=20,border_width=2, border_color="#1492c4").place(x=100, y=420)
+        ctk.CTkLabel(add, text="name: ", font=("Segoe UI", 16, "bold")).place(x=70, y=420)
+        tbComName = ctk.CTkTextbox(add, width=200, height=20,border_width=2, border_color="#1492c4").place(x=140, y=420) 
+        ctk.CTkLabel(add, text="code: ", font=("Segoe UI", 16, "bold")).place(x=380, y=420)
+        tbCode = ctk.CTkTextbox(add, width=200, height=20,border_width=2, border_color="#1492c4").place(x=440, y=420) 
+        ctk.CTkLabel(add, text="parameter: ", font=("Segoe UI", 16, "bold")).place(x=680, y=420)
+        swPar = ctk.CTkSwitch(add, text="").place(x= 780, y=423)
+        ctk.CTkLabel(add, text="info: ", font=("Segoe UI", 16, "bold")).place(x=50, y=470)
+        tbinfo = ctk.CTkTextbox(add, width=740, height=20,border_width=2, border_color="#1492c4").place(x=100, y=470) 
+        btnDelete = ctk.CTkButton(add, text="Delete", command=lambda: print("n"), width=370, state="disabled", text_color_disabled="white", fg_color="red", text_color="white").place(x=70, y=520)
+        btnNew = ctk.CTkButton(add, text="New", command=lambda: print("n"), width=370, state="disabled", text_color_disabled="white", fg_color="red", text_color="white").place(x=70, y=520)
 
     def buildUi(self):
         global currentMode
