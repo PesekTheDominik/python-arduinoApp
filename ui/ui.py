@@ -155,13 +155,32 @@ class panel(ctk.CTkFrame):
     def newCommand(self, comName, code, par, info, Tcomand, wadd):
         proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wadd)
         if proceed:
-            if comName.get("1.0", "end") != None and code.get("1.0", "end") != None and info.get("1.0", "end") != None:
-                addCommands(comName.get("1.0", "end"),code.get("1.0", "end"),par.get(), info.get("1.0", "end"))
+            Fname = comName.get("1.0", "end").strip()
+            Fcode = code.get("1.0", "end").strip()
+            Finfo = info.get("1.0", "end").strip()    
+            if Fname and Fcode and Finfo :
+                addCommands(Fname,Fcode, par.get(), Finfo)
                 self.reloadCom(Tcomand)
             else:
-                tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command")
+                tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wadd)
         else:
             return
+        
+    def editCommand(self, comName, code, par, info, Tcomand, wadd):
+        proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wadd)
+        if proceed:
+            Fname = comName.get("1.0", "end").strip()
+            Fcode = code.get("1.0", "end").strip()
+            Finfo = info.get("1.0", "end").strip()    
+            if Fname and Fcode and Finfo :
+                id = getCommandsId(Fcode)
+                updateCommands(Fname, Fcode,par.get() ,Finfo,id)
+                self.reloadCom(Tcomand)
+            else:
+                tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wadd)
+        else:
+            return
+    
 
     def reloadCom(self, Tcomand):
         Tcomand.delete(*Tcomand.get_children())
@@ -175,6 +194,9 @@ class panel(ctk.CTkFrame):
             info = row[4]
             Tcomand.insert("","end", values=(name, code, parameter, info))
 
+
+
+
     def addCom(self):
         wadd = ctk.CTkToplevel(self)
         wadd.geometry("900x610+400+200")
@@ -185,7 +207,7 @@ class panel(ctk.CTkFrame):
 
         inner = ctk.CTkFrame(outer, fg_color=("#f0f0f0","#1c1c1c"), corner_radius=4)
         inner.pack(fill="both", expand=True, padx=2, pady=2)          
-        ctk.CTkLabel(wadd, text="wadd commands", font=("Helvetica", 46, "bold")).place(x=30, y=20)
+        ctk.CTkLabel(wadd, text="add commands", font=("Helvetica", 46, "bold")).place(x=30, y=20)
 
         Tcomand = ttk.Treeview(
             wadd,
@@ -207,7 +229,13 @@ class panel(ctk.CTkFrame):
             info = row[4]
             Tcomand.insert("","end", values=(name, code, parameter, info))
 
-        Tcomand .place(x=20, y=100, width=850, height=300)
+        def Tchange(event):
+            btnNew.configure(text="Edit", command=lambda: self.editCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd))
+            btnDelete.configure(text="Delete Selected")             
+
+        Tcomand.bind("<<TreeviewSelect>>", Tchange)
+
+        Tcomand.place(x=20, y=100, width=850, height=300)
         scrollbar = ttk.Scrollbar(
             wadd,
             orient="vertical",
@@ -216,7 +244,7 @@ class panel(ctk.CTkFrame):
 
         Tcomand.configure(yscrollcommand=scrollbar.set)
 
-        scrollbar.place(x=850, y=100, height=300)
+        scrollbar.place(x=852, y=101, height=298)
         
         ctk.CTkButton(wadd,font=("Helvetica", 20 ,"bold"), text="X", command=lambda: wadd.destroy(), width=30, height=30, text_color=("black", "white"),border_width=2, border_color=("black","white") ,fg_color="transparent", hover_color="grey", corner_radius=15).place(x=810, y=37)
         ctk.CTkLabel(wadd, text="name: ", font=("Segoe UI", 16, "bold")).place(x=70, y=420)
@@ -231,9 +259,16 @@ class panel(ctk.CTkFrame):
         ctk.CTkLabel(wadd, text="info: ", font=("Segoe UI", 16, "bold")).place(x=50, y=470)
         tbinfo = ctk.CTkTextbox(wadd, width=740, height=20,border_width=2, border_color="#1492c4")
         tbinfo.place(x=100, y=470) 
-        btnDelete = ctk.CTkButton(wadd, text="Delete", font=("Segoe UI", 16, "bold"), command=lambda: print("n"), width=370, text_color_disabled="white", fg_color="red",hover_color="#610000", text_color="white").place(x=65, y=520)
-        btnNew = ctk.CTkButton(wadd, text="New", font=("Segoe UI", 16, "bold"), command=lambda: self.newCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd), width=370, state="normal", text_color_disabled="white", fg_color="green",hover_color="#00610d", text_color="white").place(x=465, y=520)
-        ctk.CTkButton(wadd, text="clear selection", font=("Segoe UI", 16, "bold"), command=lambda: Tcomand.selection_remove(Tcomand.selection()), width=770).place(x=65, y=560)
+        btnDelete = ctk.CTkButton(wadd, text="Delete All", font=("Segoe UI", 16, "bold"), command=lambda: print("n"), width=370, text_color_disabled="white", fg_color="red",hover_color="#610000", text_color="white")
+        btnDelete.place(x=65, y=520)
+        btnNew = ctk.CTkButton(wadd, text="New", font=("Segoe UI", 16, "bold"), command=lambda: self.newCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd), width=370, state="normal", text_color_disabled="white", fg_color="green",hover_color="#00610d", text_color="white")
+        btnNew.place(x=465, y=520)
+        ctk.CTkButton(wadd, text="clear selection", font=("Segoe UI", 16, "bold"), command=lambda: clearCom(), width=770).place(x=65, y=560)
+
+        def clearCom():
+            Tcomand.selection_remove(Tcomand.selection())
+            btnNew.configure(text="New")
+            btnDelete.configure(text="Delete All")             
 
     def buildUi(self):
         global currentMode

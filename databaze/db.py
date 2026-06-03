@@ -37,7 +37,7 @@ def createTables():
         CREATE TABLE IF NOT EXISTS commands(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
-            code TEXT,
+            code TEXT UNIQUE,
             parameter INTEGER,
             info TEXT
         )
@@ -146,6 +146,25 @@ def getCommandsName():
     rows = cursor.fetchall()
     conn.close()
     return [row[0] for row in rows]
+
+def getCommandsId(code):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM commands WHERE code = ?", (code,))
+    id = cursor.fetchone()
+    conn.close()
+    return id[0] if id else None
+
+def updateCommands(id, name, code, parameter, info):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE commands
+        SET name = ?, code = ?, parameter = ?, info = ?
+        WHERE id = ?   
+        """, (name, code, parameter, info,id))
+    conn.commit()
+    conn.close()
 
 
 def addMethod(name, info, dateIn, deleted):
