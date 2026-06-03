@@ -54,7 +54,6 @@ class StableDropdown(tk.Menu):
         self.refresh_colors()
 
     def refresh_colors(self):
-        """Forces the native menu engine to use explicit dark/light color values."""
         is_dark = ctk.get_appearance_mode() == "Dark"
         
         bg = "#252526" if is_dark else "#f0f0f0"
@@ -121,12 +120,9 @@ class panel(ctk.CTkFrame):
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="BaudRate: ", font=("Segoe UI", 16, "bold")).place(x=1010, y=20)
         cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=baudRates, state="readonly").place(x=1100, y=20)
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=30, y=60)
-        commands = getCommands()
+        commands = getCommandsName()
         cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=commands, state="readonly").place(x=250, y=60)
 
-
-
-    
     def preferences(self):
         pref = ctk.CTkToplevel(self)
         pref.geometry("500x400+400+400")
@@ -154,30 +150,21 @@ class panel(ctk.CTkFrame):
 
         ctk.CTkButton(inner, text="Confirm", command=lambda: self.btnCon(pref, switch), width=200).place(x=260, y=330)
         ctk.CTkButton(inner, text="Cancel", command=lambda: pref.destroy(), width=200).place(x=30, y=330)
-        
 
-    def addCom(self):
-        add = ctk.CTkToplevel(self)
-        add.geometry("900x800+400+200")
-        add.overrideredirect(True)
-        add.configure(fg_color=("#f0f0f0","#1c1c1c"), corner_radius=50)   
-        outer = ctk.CTkFrame(add, fg_color=("#1c1c1c", "#f0f0f0"), corner_radius=3)
-        outer.pack(fill="both", expand=True, padx=4, pady=4)
 
-        inner = ctk.CTkFrame(outer, fg_color=("#f0f0f0","#1c1c1c"), corner_radius=4)
-        inner.pack(fill="both", expand=True, padx=2, pady=2)          
-        ctk.CTkLabel(add, text="Add commands", font=("Helvetica", 46, "bold")).place(x=30, y=20)
+    def newCommand(self, comName, code, par, info, Tcomand, wadd):
+        proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wadd)
+        if proceed:
+            if comName.get("1.0", "end") != None and code.get("1.0", "end") != None and info.get("1.0", "end") != None:
+                addCommands(comName.get("1.0", "end"),code.get("1.0", "end"),par.get(), info.get("1.0", "end"))
+                self.reloadCom(Tcomand)
+            else:
+                tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command")
+        else:
+            return
 
-        tree = ttk.Treeview(
-            add,
-            columns=("name", "code", "parameter", "info"),
-            show="headings"
-        )
-
-        tree.heading("name", text="name")
-        tree.heading("code", text="code")
-        tree.heading("parameter", text="parameter")
-        tree.heading("info", text="info")
+    def reloadCom(self, Tcomand):
+        Tcomand.delete(*Tcomand.get_children())
 
         rows = getCommands()
 
@@ -186,28 +173,67 @@ class panel(ctk.CTkFrame):
             code = row[2]
             parameter = row[3]
             info = row[4]
-            tree.insert("","end", values=(name, code, parameter, info))
+            Tcomand.insert("","end", values=(name, code, parameter, info))
 
-        tree.place(x=20, y=100, width=850, height=300)
-        scrollbar = ttk.Scrollbar(
-            add,
-            orient="vertical",
-            command=tree.yview
+    def addCom(self):
+        wadd = ctk.CTkToplevel(self)
+        wadd.geometry("900x610+400+200")
+        wadd.overrideredirect(True)
+        wadd.configure(fg_color=("#f0f0f0","#1c1c1c"), corner_radius=50)   
+        outer = ctk.CTkFrame(wadd, fg_color=("#1c1c1c", "#f0f0f0"), corner_radius=3)
+        outer.pack(fill="both", expand=True, padx=4, pady=4)
+
+        inner = ctk.CTkFrame(outer, fg_color=("#f0f0f0","#1c1c1c"), corner_radius=4)
+        inner.pack(fill="both", expand=True, padx=2, pady=2)          
+        ctk.CTkLabel(wadd, text="wadd commands", font=("Helvetica", 46, "bold")).place(x=30, y=20)
+
+        Tcomand = ttk.Treeview(
+            wadd,
+            columns=("name", "code", "parameter", "info"),
+            show="headings"
         )
 
-        tree.configure(yscrollcommand=scrollbar.set)
+        Tcomand.heading("name", text="name")
+        Tcomand.heading("code", text="code")
+        Tcomand.heading("parameter", text="parameter")
+        Tcomand.heading("info", text="info")
+
+        rows = getCommands()
+
+        for row in rows:
+            name = row[1]
+            code = row[2]
+            parameter = row[3]
+            info = row[4]
+            Tcomand.insert("","end", values=(name, code, parameter, info))
+
+        Tcomand .place(x=20, y=100, width=850, height=300)
+        scrollbar = ttk.Scrollbar(
+            wadd,
+            orient="vertical",
+            command=Tcomand.yview
+        )
+
+        Tcomand.configure(yscrollcommand=scrollbar.set)
 
         scrollbar.place(x=850, y=100, height=300)
-        ctk.CTkLabel(add, text="name: ", font=("Segoe UI", 16, "bold")).place(x=70, y=420)
-        tbComName = ctk.CTkTextbox(add, width=200, height=20,border_width=2, border_color="#1492c4").place(x=140, y=420) 
-        ctk.CTkLabel(add, text="code: ", font=("Segoe UI", 16, "bold")).place(x=380, y=420)
-        tbCode = ctk.CTkTextbox(add, width=200, height=20,border_width=2, border_color="#1492c4").place(x=440, y=420) 
-        ctk.CTkLabel(add, text="parameter: ", font=("Segoe UI", 16, "bold")).place(x=680, y=420)
-        swPar = ctk.CTkSwitch(add, text="").place(x= 780, y=423)
-        ctk.CTkLabel(add, text="info: ", font=("Segoe UI", 16, "bold")).place(x=50, y=470)
-        tbinfo = ctk.CTkTextbox(add, width=740, height=20,border_width=2, border_color="#1492c4").place(x=100, y=470) 
-        btnDelete = ctk.CTkButton(add, text="Delete", command=lambda: print("n"), width=370, state="disabled", text_color_disabled="white", fg_color="red", text_color="white").place(x=70, y=520)
-        btnNew = ctk.CTkButton(add, text="New", command=lambda: print("n"), width=370, state="disabled", text_color_disabled="white", fg_color="red", text_color="white").place(x=70, y=520)
+        
+        ctk.CTkButton(wadd,font=("Helvetica", 20 ,"bold"), text="X", command=lambda: wadd.destroy(), width=30, height=30, text_color=("black", "white"),border_width=2, border_color=("black","white") ,fg_color="transparent", hover_color="grey", corner_radius=15).place(x=810, y=37)
+        ctk.CTkLabel(wadd, text="name: ", font=("Segoe UI", 16, "bold")).place(x=70, y=420)
+        tbComName = ctk.CTkTextbox(wadd, width=200, height=20,border_width=2, border_color="#1492c4")
+        tbComName.place(x=140, y=420) 
+        ctk.CTkLabel(wadd, text="code: ", font=("Segoe UI", 16, "bold")).place(x=380, y=420)
+        tbCode = ctk.CTkTextbox(wadd, width=200, height=20,border_width=2, border_color="#1492c4")
+        tbCode.place(x=440, y=420) 
+        ctk.CTkLabel(wadd, text="parameter: ", font=("Segoe UI", 16, "bold")).place(x=680, y=420)
+        swPar = ctk.CTkSwitch(wadd, text="")
+        swPar.place(x= 780, y=423)
+        ctk.CTkLabel(wadd, text="info: ", font=("Segoe UI", 16, "bold")).place(x=50, y=470)
+        tbinfo = ctk.CTkTextbox(wadd, width=740, height=20,border_width=2, border_color="#1492c4")
+        tbinfo.place(x=100, y=470) 
+        btnDelete = ctk.CTkButton(wadd, text="Delete", font=("Segoe UI", 16, "bold"), command=lambda: print("n"), width=370, text_color_disabled="white", fg_color="red",hover_color="#610000", text_color="white").place(x=65, y=520)
+        btnNew = ctk.CTkButton(wadd, text="New", font=("Segoe UI", 16, "bold"), command=lambda: self.newCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd), width=370, state="normal", text_color_disabled="white", fg_color="green",hover_color="#00610d", text_color="white").place(x=465, y=520)
+        ctk.CTkButton(wadd, text="clear selection", font=("Segoe UI", 16, "bold"), command=lambda: Tcomand.selection_remove(Tcomand.selection()), width=770).place(x=65, y=560)
 
     def buildUi(self):
         global currentMode

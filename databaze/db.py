@@ -139,6 +139,15 @@ def getCommands():
     conn.close()
     return rows
 
+def getCommandsName():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM commands")
+    rows = cursor.fetchall()
+    conn.close()
+    return [row[0] for row in rows]
+
+
 def addMethod(name, info, dateIn, deleted):
     conn = connect()
     cursor = conn.cursor()
