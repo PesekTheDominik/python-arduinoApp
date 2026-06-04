@@ -14,6 +14,7 @@ darkImg = ctk.CTkImage(Image.open("images/moon.png"))
 texts = ["Set up Device","Edit methods", "Edit commands","Run", "Log"]
 
 currentMode = False
+currentId = -1
 
 def setMode():
     global currentMode
@@ -167,19 +168,19 @@ class panel(ctk.CTkFrame):
             return
         
     def editCommand(self, comName, code, par, info, Tcomand, wadd):
-        proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wadd)
+        proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceed?", parent=wadd)
         if proceed:
             Fname = comName.get("1.0", "end").strip()
             Fcode = code.get("1.0", "end").strip()
             Finfo = info.get("1.0", "end").strip()    
-            if Fname and Fcode and Finfo :
-                id = getCommandsId(Fcode)
-                updateCommands(Fname, Fcode,par.get() ,Finfo,id)
+            
+            if Fname and Fcode and Finfo:
+                updateCommands(Fname, Fcode, par.get(), Finfo, self.currentId)
+                
                 self.reloadCom(Tcomand)
+                tk.messagebox.showinfo("Success", "Database updated successfully", parent=wadd)
             else:
-                tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wadd)
-        else:
-            return
+                tk.messagebox.showwarning(title="Warning", message="You must fill all of the information when creating a command", parent=wadd)
     
 
     def reloadCom(self, Tcomand):
@@ -198,6 +199,7 @@ class panel(ctk.CTkFrame):
 
 
     def addCom(self):
+        global currentId
         wadd = ctk.CTkToplevel(self)
         wadd.geometry("900x610+400+200")
         wadd.overrideredirect(True)
@@ -230,8 +232,36 @@ class panel(ctk.CTkFrame):
             Tcomand.insert("","end", values=(name, code, parameter, info))
 
         def Tchange(event):
+            # Get the current selection tuple
+            selectedItem = Tcomand.selection()
+            
+            # CRITICAL FIX: If nothing is selected, exit early and do nothing
+            if not selectedItem:
+                return
+
+            # Now it is 100% safe to access index 0
             btnNew.configure(text="Edit", command=lambda: self.editCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd))
-            btnDelete.configure(text="Delete Selected")             
+            btnDelete.configure(text="Delete Selected")     
+
+            code_values = Tcomand.item(selectedItem[0], "values")
+            
+            # Safety check in case the selected row is empty
+            if code_values:
+                self.currentId = getCommandsId(code_values[1])
+                
+                tbComName.delete("1.0", "end")
+                tbComName.insert("1.0", code_values[0])
+                
+                tbCode.delete("1.0", "end")
+                tbCode.insert("1.0", code_values[1])
+                
+                if int(code_values[2]):
+                    swPar.select()
+                else:
+                    swPar.deselect()
+                    
+                tbinfo.delete("1.0", "end")
+                tbinfo.insert("1.0", code_values[3]) 
 
         Tcomand.bind("<<TreeviewSelect>>", Tchange)
 

@@ -11,7 +11,6 @@ def createTables():
     conn = connect()
     cursor = conn.cursor()
 
-    cursor.execute("PRAGMA forein_keys = ON")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS profil(
@@ -155,14 +154,14 @@ def getCommandsId(code):
     conn.close()
     return id[0] if id else None
 
-def updateCommands(id, name, code, parameter, info):
+def updateCommands(name, code, parameter, info, commandId):
     conn = connect()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE commands
         SET name = ?, code = ?, parameter = ?, info = ?
         WHERE id = ?   
-        """, (name, code, parameter, info,id))
+        """, (name, code, parameter, info, commandId))
     conn.commit()
     conn.close()
 
