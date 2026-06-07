@@ -15,7 +15,7 @@ def createTables():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS profil(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT, 
+            name TEXT UNIQUE, 
             port TEXT,
             baudrate INTEGER NOT NULL,
             timeout REAL NOT NULL,
@@ -35,8 +35,8 @@ def createTables():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS commands(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            code TEXT UNIQUE,
+            name TEXT UNIQUE,
+            code TEXT,
             parameter INTEGER,
             info TEXT
         )
@@ -133,10 +133,13 @@ def addCommands(name,code ,parameter ,info ):
 def getCommands():
     conn = connect()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM commands")
+    cursor.execute("""SELECT * FROM commands
+                    ORDER BY id ASC
+                   """)
     rows = cursor.fetchall()
     conn.close()
     return rows
+
 
 def getCommandsName():
     conn = connect()
@@ -146,13 +149,28 @@ def getCommandsName():
     conn.close()
     return [row[0] for row in rows]
 
-def getCommandsId(code):
+def getCommandsId(name):
     conn = connect()
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM commands WHERE code = ?", (code,))
+    cursor.execute("SELECT id FROM commands WHERE name = ?", (name,))
     id = cursor.fetchone()
     conn.close()
     return id[0] if id else None
+
+def commandsCountByName(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM commands WHERE name = ?",(name,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
+
+def deleteCommand(id):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM commands WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
 
 def updateCommands(name, code, parameter, info, commandId):
     conn = connect()
@@ -165,6 +183,12 @@ def updateCommands(name, code, parameter, info, commandId):
     conn.commit()
     conn.close()
 
+def clearCommands():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM commands")
+    conn.commit()
+    conn.close()
 
 def addMethod(name, info, dateIn, deleted):
     conn = connect()

@@ -14,7 +14,6 @@ darkImg = ctk.CTkImage(Image.open("images/moon.png"))
 texts = ["Set up Device","Edit methods", "Edit commands","Run", "Log"]
 
 currentMode = False
-currentId = -1
 
 def setMode():
     global currentMode
@@ -111,18 +110,19 @@ class panel(ctk.CTkFrame):
         baudRates = ["300","1200","2400","4800","9600","19200","38400","57600","115200","230400","460800","921600",]
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Select your device profile: ",font=("Segoe UI", 16, "bold")).place(x=30,y=20)
         profilNames = getProfilName()
-        cbProfil = ctk.CTkComboBox(self.tabview.tab(texts[0]), values=profilNames, state="readonly",font=("Segoe UI", 16, "bold")).place(x=250, y=20)
-        ctk.CTkFrame( self.tabview.tab(texts[0]), width=2, height=40, fg_color="#666666").place(x=420, y=15)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Name: ",font=("Segoe UI", 16, "bold")).place(x=440, y=20)
-        tbName = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=180, height=20,border_width=2, border_color="#1492c4").place(x=500, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Port: ", font=("Segoe UI", 16, "bold")).place(x=730, y=20)
+        cbProfil = ctk.CTkComboBox(self.tabview.tab(texts[0]), values=profilNames, state="readonly",font=("Segoe UI", 16, "bold"),width=180, height=30).place(x=250, y=20)
+        ctk.CTkFrame( self.tabview.tab(texts[0]), width=2, height=40, fg_color="#666666").place(x=450, y=15)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Name: ",font=("Segoe UI", 16, "bold")).place(x=470, y=20)
+        tbName = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=180, height=20,border_width=2, border_color="#1492c4").place(x=530, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Port: ", font=("Segoe UI", 16, "bold")).place(x=760, y=20)
         ports = self.serialPorts()
-        cbPorts = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=ports,state="readonly").place(x=780,y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="BaudRate: ", font=("Segoe UI", 16, "bold")).place(x=1010, y=20)
-        cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=baudRates, state="readonly").place(x=1100, y=20)
+        cbPorts = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=ports,state="readonly").place(x=810,y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="BaudRate: ", font=("Segoe UI", 16, "bold")).place(x=1040, y=20)
+        cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=baudRates, state="readonly").place(x=1130, y=20)
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=30, y=60)
         commands = getCommandsName()
-        cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=commands, state="readonly").place(x=250, y=60)
+        cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=getCommandsName(), state="readonly").place(x=250, y=60)
+
 
     def preferences(self):
         pref = ctk.CTkToplevel(self)
@@ -159,29 +159,18 @@ class panel(ctk.CTkFrame):
             Fname = comName.get("1.0", "end").strip()
             Fcode = code.get("1.0", "end").strip()
             Finfo = info.get("1.0", "end").strip()    
-            if Fname and Fcode and Finfo :
-                addCommands(Fname,Fcode, par.get(), Finfo)
-                self.reloadCom(Tcomand)
+            if commandsCountByName(Fname) == 0:
+                if Fname and Fcode and Finfo :
+                    addCommands(Fname,Fcode, par.get(), Finfo)
+                    self.reloadCom(Tcomand)
+                else:
+                    tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wadd)
             else:
-                tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wadd)
+                tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!")
         else:
             return
         
-    def editCommand(self, comName, code, par, info, Tcomand, wadd):
-        proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceed?", parent=wadd)
-        if proceed:
-            Fname = comName.get("1.0", "end").strip()
-            Fcode = code.get("1.0", "end").strip()
-            Finfo = info.get("1.0", "end").strip()    
-            
-            if Fname and Fcode and Finfo:
-                updateCommands(Fname, Fcode, par.get(), Finfo, self.currentId)
-                
-                self.reloadCom(Tcomand)
-                tk.messagebox.showinfo("Success", "Database updated successfully", parent=wadd)
-            else:
-                tk.messagebox.showwarning(title="Warning", message="You must fill all of the information when creating a command", parent=wadd)
-    
+
 
     def reloadCom(self, Tcomand):
         Tcomand.delete(*Tcomand.get_children())
@@ -199,7 +188,8 @@ class panel(ctk.CTkFrame):
 
 
     def addCom(self):
-        global currentId
+        self.currentId = -1
+        
         wadd = ctk.CTkToplevel(self)
         wadd.geometry("900x610+400+200")
         wadd.overrideredirect(True)
@@ -222,83 +212,121 @@ class panel(ctk.CTkFrame):
         Tcomand.heading("parameter", text="parameter")
         Tcomand.heading("info", text="info")
 
-        rows = getCommands()
-
-        for row in rows:
-            name = row[1]
-            code = row[2]
-            parameter = row[3]
-            info = row[4]
-            Tcomand.insert("","end", values=(name, code, parameter, info))
+        self.reloadCom(Tcomand)
 
         def Tchange(event):
-            # Get the current selection tuple
             selectedItem = Tcomand.selection()
-            
-            # CRITICAL FIX: If nothing is selected, exit early and do nothing
             if not selectedItem:
                 return
 
-            # Now it is 100% safe to access index 0
-            btnNew.configure(text="Edit", command=lambda: self.editCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd))
-            btnDelete.configure(text="Delete Selected")     
+            btnNew.configure(text="Edit", command=lambda: editCommand())
+            btnDelete.configure(text="Delete Selected", command=lambda: deleteSelected())     
 
-            code_values = Tcomand.item(selectedItem[0], "values")
-            
-            # Safety check in case the selected row is empty
-            if code_values:
-                self.currentId = getCommandsId(code_values[1])
+            codeValues = Tcomand.item(selectedItem[0], "values")
+            if codeValues:
+                self.currentId = getCommandsId(codeValues[0])
                 
                 tbComName.delete("1.0", "end")
-                tbComName.insert("1.0", code_values[0])
+                tbComName.insert("1.0", codeValues[0])
                 
                 tbCode.delete("1.0", "end")
-                tbCode.insert("1.0", code_values[1])
+                tbCode.insert("1.0", codeValues[1])
                 
-                if int(code_values[2]):
+                if int(codeValues[2]):
                     swPar.select()
                 else:
                     swPar.deselect()
                     
                 tbinfo.delete("1.0", "end")
-                tbinfo.insert("1.0", code_values[3]) 
+                tbinfo.insert("1.0", codeValues[3]) 
 
         Tcomand.bind("<<TreeviewSelect>>", Tchange)
-
         Tcomand.place(x=20, y=100, width=850, height=300)
-        scrollbar = ttk.Scrollbar(
-            wadd,
-            orient="vertical",
-            command=Tcomand.yview
-        )
-
+        
+        scrollbar = ttk.Scrollbar(wadd, orient="vertical", command=Tcomand.yview)
         Tcomand.configure(yscrollcommand=scrollbar.set)
-
         scrollbar.place(x=852, y=101, height=298)
         
-        ctk.CTkButton(wadd,font=("Helvetica", 20 ,"bold"), text="X", command=lambda: wadd.destroy(), width=30, height=30, text_color=("black", "white"),border_width=2, border_color=("black","white") ,fg_color="transparent", hover_color="grey", corner_radius=15).place(x=810, y=37)
+        ctk.CTkButton(wadd, font=("Helvetica", 20 ,"bold"), text="X", command=lambda: closeWin(), width=30, height=30, text_color=("black", "white"), border_width=2, border_color=("black","white") ,fg_color="transparent", hover_color="grey", corner_radius=15).place(x=810, y=37)
+        
+        def closeWin():
+            wadd.destroy()
+
         ctk.CTkLabel(wadd, text="name: ", font=("Segoe UI", 16, "bold")).place(x=70, y=420)
-        tbComName = ctk.CTkTextbox(wadd, width=200, height=20,border_width=2, border_color="#1492c4")
+        tbComName = ctk.CTkTextbox(wadd, width=200, height=20, border_width=2, border_color="#1492c4")
         tbComName.place(x=140, y=420) 
+        
         ctk.CTkLabel(wadd, text="code: ", font=("Segoe UI", 16, "bold")).place(x=380, y=420)
-        tbCode = ctk.CTkTextbox(wadd, width=200, height=20,border_width=2, border_color="#1492c4")
+        tbCode = ctk.CTkTextbox(wadd, width=200, height=20, border_width=2, border_color="#1492c4")
         tbCode.place(x=440, y=420) 
+        
         ctk.CTkLabel(wadd, text="parameter: ", font=("Segoe UI", 16, "bold")).place(x=680, y=420)
         swPar = ctk.CTkSwitch(wadd, text="")
         swPar.place(x= 780, y=423)
+        
         ctk.CTkLabel(wadd, text="info: ", font=("Segoe UI", 16, "bold")).place(x=50, y=470)
-        tbinfo = ctk.CTkTextbox(wadd, width=740, height=20,border_width=2, border_color="#1492c4")
+        tbinfo = ctk.CTkTextbox(wadd, width=740, height=20, border_width=2, border_color="#1492c4")
         tbinfo.place(x=100, y=470) 
-        btnDelete = ctk.CTkButton(wadd, text="Delete All", font=("Segoe UI", 16, "bold"), command=lambda: print("n"), width=370, text_color_disabled="white", fg_color="red",hover_color="#610000", text_color="white")
+        
+        btnDelete = ctk.CTkButton(wadd, text="Delete All", font=("Segoe UI", 16, "bold"), command=lambda: deleteAll(), width=370, text_color_disabled="white", fg_color="red", hover_color="#610000", text_color="white")
         btnDelete.place(x=65, y=520)
-        btnNew = ctk.CTkButton(wadd, text="New", font=("Segoe UI", 16, "bold"), command=lambda: self.newCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd), width=370, state="normal", text_color_disabled="white", fg_color="green",hover_color="#00610d", text_color="white")
+        
+        btnNew = ctk.CTkButton(wadd, text="New", font=("Segoe UI", 16, "bold"), command=lambda: self.newCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd), width=370, state="normal", text_color_disabled="white", fg_color="green", hover_color="#00610d", text_color="white")
         btnNew.place(x=465, y=520)
+        
         ctk.CTkButton(wadd, text="clear selection", font=("Segoe UI", 16, "bold"), command=lambda: clearCom(), width=770).place(x=65, y=560)
 
         def clearCom():
             Tcomand.selection_remove(Tcomand.selection())
-            btnNew.configure(text="New")
-            btnDelete.configure(text="Delete All")             
+            clearTb()
+            btnNew.configure(text="New", command=lambda: self.newCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd))
+            btnDelete.configure(text="Delete All", command=lambda: deleteAll())             
+    
+        def deleteAll():
+            delete = messagebox.askquestion("Warning", "Are you sure?", parent=wadd) 
+            if delete == 'yes': 
+                clearCommands()
+                self.reloadCom(Tcomand)
+                clearCom()
+
+        def editCommand():
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceed?", parent=wadd)
+            if proceed:
+                Fname = tbComName.get("1.0", "end").strip()
+                Fcode = tbCode.get("1.0", "end").strip()
+                Finfo = tbinfo.get("1.0", "end").strip()    
+                
+                if Fname and Fcode and Finfo:
+                    codeValues = Tcomand.item(Tcomand.selection()[0], "values")
+
+                    updateCommands(Fname, Fcode, swPar.get(), Finfo, self.currentId)
+
+                    if commandsCountByName(Fname) > 1:
+                        updateCommands(codeValues[0], codeValues[1], codeValues[2], codeValues[3], self.currentId) 
+                        tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!", parent=wadd)
+                        return
+                    
+                    self.reloadCom(Tcomand)
+                    tk.messagebox.showinfo("Success", "Database updated successfully", parent=wadd)
+                    clearCom()           
+                else:
+                    tk.messagebox.showwarning(title="Warning", message="You must fill all of the information when creating a command", parent=wadd)
+
+        def clearTb():
+            tbComName.delete("1.0", "end")
+            tbCode.delete("1.0", "end")
+            tbinfo.delete("1.0", "end")
+            swPar.deselect()
+
+        def deleteSelected():
+            if self.currentId != -1:
+                confirm = messagebox.askyesno("Confirm Delete", "Are you sure?", parent=wadd)
+                if confirm: 
+                    deleteCommand(self.currentId)
+                    self.reloadCom(Tcomand)
+                    clearCom()
+    
+
 
     def buildUi(self):
         global currentMode
