@@ -15,6 +15,7 @@ texts = ["Set up Device","Edit methods", "Edit commands","Run", "Log"]
 
 currentMode = False
 
+
 def setMode():
     global currentMode
     try:
@@ -88,7 +89,7 @@ class panel(ctk.CTkFrame):
         
         self.pack(fill="both", expand=True)
         
-        self.master.title("Control Panel")
+        self.master.title("Control Panel | Arduino disconnected")
         self.master.geometry("1400x1000+230+30") 
         self.master.resizable(False, False) 
 
@@ -110,19 +111,88 @@ class panel(ctk.CTkFrame):
         baudRates = ["300","1200","2400","4800","9600","19200","38400","57600","115200","230400","460800","921600",]
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Select your device profile: ",font=("Segoe UI", 16, "bold")).place(x=30,y=20)
         profilNames = getProfilName()
-        cbProfil = ctk.CTkComboBox(self.tabview.tab(texts[0]), values=profilNames, state="readonly",font=("Segoe UI", 16, "bold"),width=180, height=30).place(x=250, y=20)
+        cbProfil = ctk.CTkComboBox(self.tabview.tab(texts[0]), values=profilNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: loadProfil(choice),width=180, height=30)
+        cbProfil.place(x=250, y=20)
         ctk.CTkFrame( self.tabview.tab(texts[0]), width=2, height=40, fg_color="#666666").place(x=450, y=15)
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Name: ",font=("Segoe UI", 16, "bold")).place(x=470, y=20)
-        tbName = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=180, height=20,border_width=2, border_color="#1492c4").place(x=530, y=20)
+        tbName = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=180, height=20,border_width=2, border_color="#1492c4")
+        tbName.place(x=530, y=20)
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Port: ", font=("Segoe UI", 16, "bold")).place(x=760, y=20)
         ports = self.serialPorts()
-        cbPorts = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=ports,state="readonly").place(x=810,y=20)
+        cbPorts = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=ports,state="readonly")
+        cbPorts.place(x=810,y=20)
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="BaudRate: ", font=("Segoe UI", 16, "bold")).place(x=1040, y=20)
-        cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=baudRates, state="readonly").place(x=1130, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=30, y=60)
-        commands = getCommandsName()
-        cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=getCommandsName(), state="readonly").place(x=250, y=60)
+        cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=baudRates, state="readonly")
+        cbBaudRate.place(x=1130, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="timeout", font=("Segoe UI", 16, "bold")).place(x=30, y=60)
+        tbTimeout = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=180, height=20,border_width=2, border_color="#1492c4")
+        tbTimeout.place(x=120, y=60)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=350, y=60)
+        cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=getCommandsName(), state="readonly")
+        cbCommands.place(x=510, y=60)
 
+        btnEditor = ctk.CTkButton(self.tabview.tab(texts[0]),width=160,  height=30, command=lambda: newProfil(), text="New")
+        btnDelete = ctk.CTkButton(self.tabview.tab(texts[0]),width=160, height=30, command=lambda: delAllProfils(), text="Delete all")
+        btnClear = ctk.CTkButton(self.tabview.tab(texts[0]), height=30,width=160, command=lambda: clearProf(), text="Clear Selection")
+
+        btnDelete.place(x=930, y=60)
+        btnEditor.place(x=730, y=60)
+
+        def loadProfil(choice):
+            profil = getProfilByName(choice)
+            tbName.delete("1.0", "end")
+            tbName.insert("1.0", profil[1])
+            cbPorts.set(profil[2])
+            cbBaudRate.set(profil[3])
+            tbTimeout.delete("1.0", "end")
+            tbTimeout.insert("1.0", profil[4])
+            cbCommands.set(profil[5])
+            btnClear.place(x=1130, y=60)   
+            btnEditor.configure(text="Edit", command=lambda: editProfil())        
+            btnDelete.configure(text="Delete selected", command=lambda: delProfil())
+
+        def delAllProfils():
+            clearProfil()
+            clearInputs()
+            cbProfil.configure(values=getProfilName())
+
+
+
+        def editProfil():
+            print()
+        
+        def delProfil():
+            print()
+
+        def newProfil():
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
+            if proceed:
+                Pname = tbName.get("1.0", "end").strip()
+                Pport = cbPorts.get()
+                Pbaud = cbBaudRate.get()
+                Pcommand = cbCommands.get()
+                Ptimeout = tbTimeout.get("1.0", "end").strip()
+                if Pname and Ptimeout and Pport and Pbaud and Pcommand:
+                    if countProfilByName(Pname) < 1:
+                        addProfil(Pname, Pport, Pbaud, Ptimeout, Pcommand)
+                        profilNames = getProfilName()
+                        cbProfil.configure(values=profilNames)
+
+                else:
+                    tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
+
+        def clearProf():
+            clearInputs()
+            btnEditor.configure(text="New", command=lambda: newProfil())       
+            btnDelete.configure(text="Delete all", command=lambda: delAllProfils())
+
+        def clearInputs():
+            cbCommands.set("")
+            cbBaudRate.set("")
+            cbPorts.set("")
+            cbProfil.set("")
+            tbTimeout.delete("1.0", "end")
+            tbName.delete("1.0", "end")
 
     def preferences(self):
         pref = ctk.CTkToplevel(self)

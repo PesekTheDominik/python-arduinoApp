@@ -89,8 +89,8 @@ def addProfil(name, port, baudrate, timeout, testCmd):
     conn = connect()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO profil (name, port, baudrate, timeout, testCmd)
-        VALUES (?,?,?,?,?) 
+        INSERT INTO profil (name, port, baudrate, timeout,testCmd)
+        VALUES (?,?,?,?, ?) 
     """, (name, port, baudrate, timeout, testCmd))
     conn.commit()
     conn.close()
@@ -103,6 +103,23 @@ def getProfilName():
     conn.close()
     return [row[0] for row in rows]
 
+def getProfilByName(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM profil WHERE name = ?", (name,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return row
+
+def countProfilByName(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM profil WHERE name = ?", (name,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
+    
 def clearProfil():
     conn = connect()
     cursor = conn.cursor()
