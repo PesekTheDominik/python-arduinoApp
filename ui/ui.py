@@ -108,6 +108,7 @@ class panel(ctk.CTkFrame):
 
 
     def setup_tabs(self):
+        #--------------------------tab 1------------------------------------------------#
         baudRates = ["300","1200","2400","4800","9600","19200","38400","57600","115200","230400","460800","921600",]
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Select your device profile: ",font=("Segoe UI", 16, "bold")).place(x=30,y=20)
         profilNames = getProfilName()
@@ -124,19 +125,30 @@ class panel(ctk.CTkFrame):
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="BaudRate: ", font=("Segoe UI", 16, "bold")).place(x=1040, y=20)
         cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=baudRates, state="readonly")
         cbBaudRate.place(x=1130, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="timeout", font=("Segoe UI", 16, "bold")).place(x=30, y=60)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="timeout", font=("Segoe UI", 16, "bold")).place(x=30, y=80)
         tbTimeout = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=180, height=20,border_width=2, border_color="#1492c4")
-        tbTimeout.place(x=120, y=60)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=350, y=60)
+        tbTimeout.place(x=120, y=80)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=350, y=80)
         cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=getCommandsName(), state="readonly")
-        cbCommands.place(x=510, y=60)
+        cbCommands.place(x=510, y=80)
 
-        btnEditor = ctk.CTkButton(self.tabview.tab(texts[0]),width=160,  height=30, command=lambda: newProfil(), text="New")
-        btnDelete = ctk.CTkButton(self.tabview.tab(texts[0]),width=160, height=30, command=lambda: delAllProfils(), text="Delete all")
-        btnClear = ctk.CTkButton(self.tabview.tab(texts[0]), height=30,width=160, command=lambda: clearProf(), text="Clear Selection")
+        btnEditor = ctk.CTkButton(self.tabview.tab(texts[0]),width=160,  height=30, command=lambda: newProfil(),font=("Segoe UI", 16, "bold"), text="New")
+        btnDelete = ctk.CTkButton(self.tabview.tab(texts[0]),width=160, height=30, command=lambda: delAllProfils(),font=("Segoe UI", 16, "bold"), text="Delete all")
+        btnClear = ctk.CTkButton(self.tabview.tab(texts[0]), height=30,width=160, command=lambda: clearProf(),font=("Segoe UI", 16, "bold"), text="Clear Selection")
+        conn = True
+        btnConnect = ctk.CTkButton(self.tabview.tab(texts[0]), width=650, height=40, text="Connect",font=("Segoe UI", 16, "bold"), command=lambda: arduinoConnect())
 
-        btnDelete.place(x=930, y=60)
-        btnEditor.place(x=730, y=60)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test Cmd result: ", font=("Segoe UI", 16, "bold")).place(x=750, y=145)
+        tbRes = ctk.CTkTextbox(self.tabview.tab(texts[0]), state="disabled", width=410, height=30,border_width=2, border_color="#1492c4")
+        tbRes.place(x=900, y=145)
+
+        btnConnect.place(x=20, y=140)
+        btnDelete.place(x=930, y=80)
+        btnEditor.place(x=730, y=80)
+
+        def arduinoConnect():
+            if conn:
+                print()
 
         def loadProfil(choice):
             profil = getProfilByName(choice)
@@ -159,10 +171,25 @@ class panel(ctk.CTkFrame):
 
 
         def editProfil():
-            print()
-        
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede? \nBy editing you will delete testCmd result")
+            if proceed:
+                id = getProfilId(cbProfil.get())
+                Pname = tbName.get("1.0", "end").strip()
+                Pport = cbPorts.get()
+                Pbaud = int(cbBaudRate.get())
+                Pcommand = cbCommands.get()
+                Ptimeout = float(tbTimeout.get("1.0", "end").strip())
+                if Pname and Ptimeout and Pport and Pbaud and Pcommand:
+                    if countProfilByName(Pname) < 2:
+                        updateProfil(Pname, Pport, Pbaud, Ptimeout,Pcommand, id)
+                        clearInputs()
+                        cbProfil.configure(values=getProfilName())
+
         def delProfil():
-            print()
+            if cbProfil.get():
+                deleteProfil(cbProfil.get())
+                clearInputs()
+                cbProfil.configure(values=getProfilName())
 
         def newProfil():
             proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
@@ -177,7 +204,7 @@ class panel(ctk.CTkFrame):
                         addProfil(Pname, Pport, Pbaud, Ptimeout, Pcommand)
                         profilNames = getProfilName()
                         cbProfil.configure(values=profilNames)
-
+                        clearInputs()
                 else:
                     tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
 

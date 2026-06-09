@@ -95,6 +95,29 @@ def addProfil(name, port, baudrate, timeout, testCmd):
     conn.commit()
     conn.close()
 
+def updateProfil(name, port, baudrate, timeout, testCmd, id):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE profil
+        SET name = ?, port = ?, baudrate = ?, timeout = ?, testCmd = ?, testRes = ?
+        WHERE id = ?
+    """, (name, port, baudrate, timeout, testCmd, None, id))
+    conn.commit()
+    conn.close()
+
+def getProfilId(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id 
+        FROM profil
+        WHERE name = ?
+    """, (name, ))
+    id = cursor.fetchone()
+    conn.close()
+    return id[0] if id else None
+
 def getProfilName():
     conn = connect()
     cursor = conn.cursor()
@@ -124,6 +147,13 @@ def clearProfil():
     conn = connect()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM profil")
+    conn.commit()
+    conn.close()
+
+def deleteProfil(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DElETE FROM profil WHERE name = ?", (name,))
     conn.commit()
     conn.close()
 
