@@ -31,7 +31,7 @@ missing module named multiprocessing.get_context - imported by multiprocessing (
 missing module named multiprocessing.TimeoutError - imported by multiprocessing (top-level), multiprocessing.pool (top-level)
 missing module named multiprocessing.set_start_method - imported by multiprocessing (top-level), multiprocessing.spawn (top-level)
 missing module named multiprocessing.get_start_method - imported by multiprocessing (top-level), multiprocessing.spawn (top-level)
-missing module named pyimod02_importers - imported by C:\Users\pesivec\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\PyInstaller\hooks\rthooks\pyi_rth_pkgutil.py (delayed)
+missing module named pyimod02_importers - imported by C:\Users\pesivec\Documents\excelniarduino\.venv\Lib\site-packages\PyInstaller\hooks\rthooks\pyi_rth_pkgutil.py (delayed)
 missing module named readline - imported by code (delayed, conditional, optional), sqlite3.__main__ (delayed, conditional, optional)
 missing module named termios - imported by serial.serialposix (top-level)
 missing module named 'System.IO' - imported by serial.serialcli (top-level)
