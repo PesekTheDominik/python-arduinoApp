@@ -9,11 +9,32 @@ class arduino:
         self.ser = None
     
     def connectToArduino(self):
-        self.ser = serial.Serial(self.port, int(self.baudrate), timeout=float(self.timeout))
-        time.sleep(2)
+        try:
+            self.ser = serial.Serial(
+                self.port,
+                int(self.baudrate),
+                timeout=float(self.timeout)
+            )
+            time.sleep(2)
+            return True
 
-    def TestCmd(self, cmd):
-        if not self.ser:
-            return 1
-        
+        except Exception as e:
+            return False
+
+    def send(self, cmd):
+        if not self.ser or not self.ser.is_open:
+            return "Not connected"
+
+        try:
+            self.ser.write(f"{cmd}\n".encode())
+
+            reply = self.ser.readline().decode().strip()
+
+            if reply:
+                return reply
+
+            return "No response"
+
+        except Exception as e:
+            return f"Error: {e}"
         

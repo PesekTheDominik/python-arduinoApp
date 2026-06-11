@@ -5,12 +5,21 @@ from PIL import Image
 import configparser
 from serial.tools import list_ports
 from databaze.db import *
+from arduino.arduino import *
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 config = configparser.ConfigParser()
-config.read("settings/settings.ini")
+config.read(resource_path("settings/settings.ini"))
 
-lightImg = ctk.CTkImage(Image.open("images/sun2.png"))
-darkImg = ctk.CTkImage(Image.open("images/moon.png")) 
+lightImg = ctk.CTkImage(Image.open(resource_path("images/sun2.png")))
+darkImg = ctk.CTkImage(Image.open(resource_path("images/moon.png"))) 
 texts = ["Set up Device","Edit methods", "Edit commands","Run", "Log"]
 
 currentMode = False
@@ -41,7 +50,7 @@ def changeMode(btn, file_menu):
         ctk.set_appearance_mode("dark")
 
     config.set("program", "mode", str(currentMode))
-    with open("settings/settings.ini", "w") as f:
+    with open(resource_path("settings/settings.ini"), "w") as f:
         config.write(f)
     
     if file_menu:
@@ -138,18 +147,28 @@ class panel(ctk.CTkFrame):
         conn = True
         btnConnect = ctk.CTkButton(self.tabview.tab(texts[0]), width=650, height=40, text="Connect",font=("Segoe UI", 16, "bold"), command=lambda: arduinoConnect())
 
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test Cmd result: ", font=("Segoe UI", 16, "bold")).place(x=750, y=145)
-        tbRes = ctk.CTkTextbox(self.tabview.tab(texts[0]), state="disabled", width=410, height=30,border_width=2, border_color="#1492c4")
-        tbRes.place(x=900, y=145)
-
-        btnConnect.place(x=20, y=140)
         btnDelete.place(x=930, y=80)
         btnEditor.place(x=730, y=80)
 
         def arduinoConnect():
             if conn:
-                print()
+                profil = getProfilByName(cbProfil.get())
+                connection = arduino(profil[2], profil[3], profil[4])
+                y = connection.connectToArduino()
+                if y:         
+                    ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test Cmd result: ", font=("Segoe UI", 16, "bold")).place(x=750, y=145)
+                    tbRes = ctk.CTkTextbox(self.tabview.tab(texts[0]), state="disabled", width=410, height=30,border_width=2, border_color="#1492c4")
+                    tbRes.place(x=900, y=145)
+                    self.master.title("Control Panel | Arduino connected")
+                    reply = connection.send(profil[5])
+                    tbRes.configure(state="normal")
+                    tbRes.delete("1.0", "end")
+                    tbRes.insert("1.0", reply)
+                    tbRes.configure(state="disabled")
 
+                else:
+                    tk.messagebox.showwarning("Warning", "Did not find arduino")
+    
         def loadProfil(choice):
             profil = getProfilByName(choice)
             tbName.delete("1.0", "end")
@@ -159,9 +178,10 @@ class panel(ctk.CTkFrame):
             tbTimeout.delete("1.0", "end")
             tbTimeout.insert("1.0", profil[4])
             cbCommands.set(profil[5])
-            btnClear.place(x=1130, y=60)   
+            btnClear.place(x=1130, y=80)   
             btnEditor.configure(text="Edit", command=lambda: editProfil())        
             btnDelete.configure(text="Delete selected", command=lambda: delProfil())
+            btnConnect.place(x=20, y=140)
 
         def delAllProfils():
             clearProfil()
@@ -212,6 +232,8 @@ class panel(ctk.CTkFrame):
             clearInputs()
             btnEditor.configure(text="New", command=lambda: newProfil())       
             btnDelete.configure(text="Delete all", command=lambda: delAllProfils())
+            btnConnect.place_forget()
+            btnClear.place_forget()
 
         def clearInputs():
             cbCommands.set("")
@@ -220,6 +242,8 @@ class panel(ctk.CTkFrame):
             cbProfil.set("")
             tbTimeout.delete("1.0", "end")
             tbName.delete("1.0", "end")
+
+            btnClear.place_forget()
 
     def preferences(self):
         pref = ctk.CTkToplevel(self)

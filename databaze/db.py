@@ -2,8 +2,16 @@ import sqlite3
 import os
 import sys
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 def connect():
-    conn = sqlite3.connect("tabulky.db")
+    conn = sqlite3.connect(resource_path("tabulky.db"))
     conn.row_factory = sqlite3.Row
     return conn
 
