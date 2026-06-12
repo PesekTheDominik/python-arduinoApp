@@ -114,6 +114,17 @@ def updateProfil(name, port, baudrate, timeout, testCmd, id):
     conn.commit()
     conn.close()
 
+def updateProfilTest(reply, id):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE profil
+        SET testRes = ?
+        WHERE id = ?
+    """, (reply, id))
+    conn.commit()
+    conn.close()
+
 def getProfilId(name):
     conn = connect()
     cursor = conn.cursor()
@@ -199,10 +210,10 @@ def getCommands():
 def getCommandsName():
     conn = connect()
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM commands")
+    cursor.execute("SELECT name, parameter FROM commands")
     rows = cursor.fetchall()
     conn.close()
-    return [row[0] for row in rows]
+    return [(row[0] + str(row[1])) for row in rows]
 
 def getCommandsId(name):
     conn = connect()

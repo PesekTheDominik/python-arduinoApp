@@ -135,11 +135,13 @@ class panel(ctk.CTkFrame):
         cbBaudRate = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=baudRates, state="readonly")
         cbBaudRate.place(x=1130, y=20)
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="timeout", font=("Segoe UI", 16, "bold")).place(x=30, y=80)
-        tbTimeout = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=180, height=20,border_width=2, border_color="#1492c4")
+        tbTimeout = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=120, height=20,border_width=2, border_color="#1492c4")
         tbTimeout.place(x=120, y=80)
-        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=350, y=80)
-        cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=180, height=30, values=getCommandsName(), state="readonly")
-        cbCommands.place(x=510, y=80)
+        ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=280, y=80)
+
+        commands = [c[:-1] for c in getCommandsName()]
+        cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=150, height=30, values=commands , state="readonly")
+        cbCommands.place(x=430, y=80)
 
         btnEditor = ctk.CTkButton(self.tabview.tab(texts[0]),width=160,  height=30, command=lambda: newProfil(),font=("Segoe UI", 16, "bold"), text="New")
         btnDelete = ctk.CTkButton(self.tabview.tab(texts[0]),width=160, height=30, command=lambda: delAllProfils(),font=("Segoe UI", 16, "bold"), text="Delete all")
@@ -161,10 +163,12 @@ class panel(ctk.CTkFrame):
                     tbRes.place(x=900, y=145)
                     self.master.title("Control Panel | Arduino connected")
                     reply = connection.send(profil[5])
+                    updateProfilTest(reply, id)
                     tbRes.configure(state="normal")
                     tbRes.delete("1.0", "end")
                     tbRes.insert("1.0", reply)
                     tbRes.configure(state="disabled")
+                    
 
                 else:
                     tk.messagebox.showwarning("Warning", "Did not find arduino")
