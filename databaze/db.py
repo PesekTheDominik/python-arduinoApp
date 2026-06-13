@@ -161,6 +161,14 @@ def countProfilByName(name):
     count = cursor.fetchone()[0]
     conn.close()
     return count
+
+def getProfil():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM profil")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
     
 def clearProfil():
     conn = connect()
@@ -205,6 +213,22 @@ def getCommands():
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+def getCommandsPar(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT parameter FROM commands WHERE name = ?", (name, ))
+    par = cursor.fetchone()
+    conn.close()
+    return par[0] if par else None
+
+def getCommandCode(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT code FROM commands WHERE name = ?", (name, ))
+    code = cursor.fetchone()
+    conn.close()
+    return code[0] if code else None
 
 
 def getCommandsName():

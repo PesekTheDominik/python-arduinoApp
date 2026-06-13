@@ -2,7 +2,7 @@ import serial
 import time
 
 class arduino:
-    def __init__(self, port, baudrate, timeout):
+    def setUp(self, port, baudrate, timeout):
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -19,7 +19,11 @@ class arduino:
             return True
 
         except Exception as e:
-            return False
+            return e
+        
+    def closeCommunication(self):
+        if self.ser and self.ser.is_open:
+            self.ser.close()    
 
     def send(self, cmd):
         if not self.ser or not self.ser.is_open:
@@ -33,8 +37,7 @@ class arduino:
             if reply:
                 return reply
 
-            return "No response"
+            return False
 
         except Exception as e:
-            return f"Error: {e}"
-        
+            return f"Error: {e}"     

@@ -21,6 +21,7 @@ config.read(resource_path("settings/settings.ini"))
 lightImg = ctk.CTkImage(Image.open(resource_path("images/sun2.png")))
 darkImg = ctk.CTkImage(Image.open(resource_path("images/moon.png"))) 
 texts = ["Set up Device","Edit methods", "Edit commands","Run", "Log"]
+connection = arduino()
 
 currentMode = False
 
@@ -104,8 +105,9 @@ class panel(ctk.CTkFrame):
 
         self.buildUi()
 
-    def btnCon(self, pref, sw):
-        config.set("program", "timeout", str(sw.get()))
+    def btnCon(self, pref, sw1, sw2):
+        config.set("program", "timeout", str(sw1.get()))
+        config.set("program", "ClearProfilSelection", str(sw2.get()))
         with open("settings/settings.ini", "w") as f:
             config.write(f)
         pref.destroy()
@@ -121,6 +123,11 @@ class panel(ctk.CTkFrame):
         baudRates = ["300","1200","2400","4800","9600","19200","38400","57600","115200","230400","460800","921600",]
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Select your device profile: ",font=("Segoe UI", 16, "bold")).place(x=30,y=20)
         profilNames = getProfilName()
+        profilLen = len(profilNames)
+        btnDelete = ctk.CTkButton(self.tabview.tab(texts[0]),width=160, height=30, command=lambda: delAllProfils(),font=("Segoe UI", 16, "bold"), text="Delete all")
+        if (profilLen) != 0:
+            btnDelete.place(x=930, y=80)
+
         cbProfil = ctk.CTkComboBox(self.tabview.tab(texts[0]), values=profilNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: loadProfil(choice),width=180, height=30)
         cbProfil.place(x=250, y=20)
         ctk.CTkFrame( self.tabview.tab(texts[0]), width=2, height=40, fg_color="#666666").place(x=450, y=15)
@@ -140,38 +147,77 @@ class panel(ctk.CTkFrame):
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=280, y=80)
 
         commands = [c[:-1] for c in getCommandsName()]
-        cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=150, height=30, values=commands , state="readonly")
+        cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=150, height=30, values=commands , state="readonly", command=lambda choice: loadCommands(choice))
+        tbParameter = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=100, height=30,border_width=2, border_color="#1492c4")
+
         cbCommands.place(x=430, y=80)
 
         btnEditor = ctk.CTkButton(self.tabview.tab(texts[0]),width=160,  height=30, command=lambda: newProfil(),font=("Segoe UI", 16, "bold"), text="New")
-        btnDelete = ctk.CTkButton(self.tabview.tab(texts[0]),width=160, height=30, command=lambda: delAllProfils(),font=("Segoe UI", 16, "bold"), text="Delete all")
         btnClear = ctk.CTkButton(self.tabview.tab(texts[0]), height=30,width=160, command=lambda: clearProf(),font=("Segoe UI", 16, "bold"), text="Clear Selection")
         conn = True
-        btnConnect = ctk.CTkButton(self.tabview.tab(texts[0]), width=650, height=40, text="Connect",font=("Segoe UI", 16, "bold"), command=lambda: arduinoConnect())
+        btnConnect = ctk.CTkButton(self.tabview.tab(texts[0]), width=650, height=40, text="Connect",font=("Segoe UI", 16, "bold"), command=lambda: arduinoConnect(conn))
 
-        btnDelete.place(x=930, y=80)
+        addiLbl = ctk.CTkLabel(self.tabview.tab(texts[0]), text="try addition command:",font=("Segoe UI", 16, "bold"))
+        cbAddi = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=150, height=30, values=commands , state="readonly", command=lambda choice: loadAddi(choice))
+        tbAddi = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=100, height=30,border_width=2, border_color="#1492c4" )
+        btnAddi = ctk.CTkButton(self.tabview.tab(texts[0]), height=30,width=160, command=lambda: sendAddi(),font=("Segoe UI", 16, "bold"), text="Test")
+        lblAns = ctk.CTkLabel(self.tabview.tab(texts[0]), text="Answer: ",font=("Segoe UI", 16, "bold"))    
+        tbAns = ctk.CTkTextbox(self.tabview.tab(texts[0]), state="disabled", width=410, height=30,border_width=2, border_color="#1492c4")
+        
         btnEditor.place(x=730, y=80)
 
-        def arduinoConnect():
+        def sendAddi():
+            print()
+
+        def loadCommands(choice):
+            par = getCommandsPar(choice)
+            if par == 1:
+                tbParameter.place(x=600, y=80)
+            else:
+                tbParameter.place_forget()
+
+        def loadAddi(choice):
+            par = getCommandsPar(choice)
+            if par == 1:
+                tbAddi.place(x=380, y=190)
+            else:
+                tbAddi.place_forget()
+
+        def arduinoConnect(conn):
+            global connection
+
+            profil = getProfilByName(cbProfil.get())
+            connection.setUp(profil[2],profil[3],profil[4])
             if conn:
-                profil = getProfilByName(cbProfil.get())
-                connection = arduino(profil[2], profil[3], profil[4])
                 y = connection.connectToArduino()
-                if y:         
+                if y == True:         
+                    conn = False
                     ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test Cmd result: ", font=("Segoe UI", 16, "bold")).place(x=750, y=145)
                     tbRes = ctk.CTkTextbox(self.tabview.tab(texts[0]), state="disabled", width=410, height=30,border_width=2, border_color="#1492c4")
                     tbRes.place(x=900, y=145)
                     self.master.title("Control Panel | Arduino connected")
-                    reply = connection.send(profil[5])
-                    updateProfilTest(reply, id)
+                    reply = connection.send(getCommandCode(profil[5]) + tbParameter.get("1.0", "end"))
+                    if reply == False:
+                        updateProfilTest(None, profil[0])
+                    else:
+                        updateProfilTest(reply, profil[0])
                     tbRes.configure(state="normal")
                     tbRes.delete("1.0", "end")
                     tbRes.insert("1.0", reply)
                     tbRes.configure(state="disabled")
-                    
-
+                    addiLbl.place(x=20, y=190)
+                    cbAddi.place(x=210, y=190)
+                    btnAddi.place(x = 510, y=190)
+                    lblAns.place(x=810, y=190)
+                    tbAns.place(x=900, y=190)
+                    btnConnect.configure(text="Disconnect")
                 else:
-                    tk.messagebox.showwarning("Warning", "Did not find arduino")
+                    tk.messagebox.showwarning("Warning", y)
+            else:
+                self.master.title("Control Panel | Arduino disconnected")
+                connection.closeCommunication()
+                conn = True
+                
     
         def loadProfil(choice):
             profil = getProfilByName(choice)
@@ -187,10 +233,13 @@ class panel(ctk.CTkFrame):
             btnDelete.configure(text="Delete selected", command=lambda: delProfil())
             btnConnect.place(x=20, y=140)
 
+
         def delAllProfils():
-            clearProfil()
-            clearInputs()
-            cbProfil.configure(values=getProfilName())
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede? \nBy editing you will delete testCmd result")
+            if proceed:
+                clearProfil()
+                clearInputs()
+                cbProfil.configure(values=getProfilName())
 
 
 
@@ -206,14 +255,18 @@ class panel(ctk.CTkFrame):
                 if Pname and Ptimeout and Pport and Pbaud and Pcommand:
                     if countProfilByName(Pname) < 2:
                         updateProfil(Pname, Pport, Pbaud, Ptimeout,Pcommand, id)
-                        clearInputs()
                         cbProfil.configure(values=getProfilName())
+                        if int(config.get("program", "clearprofilselection")) == 1:
+                            clearInputs()
+
 
         def delProfil():
-            if cbProfil.get():
-                deleteProfil(cbProfil.get())
-                clearInputs()
-                cbProfil.configure(values=getProfilName())
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede? \nBy editing you will delete testCmd result")
+            if proceed:
+                if cbProfil.get():
+                    deleteProfil(cbProfil.get())
+                    clearInputs()
+                    cbProfil.configure(values=getProfilName())
 
         def newProfil():
             proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
@@ -229,6 +282,10 @@ class panel(ctk.CTkFrame):
                         profilNames = getProfilName()
                         cbProfil.configure(values=profilNames)
                         clearInputs()
+                        if profilLen == 0:
+                            profilLen
+                        if profilLen == 0:
+                            btnDelete.place(x=930, y=80)
                 else:
                     tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
 
@@ -249,6 +306,61 @@ class panel(ctk.CTkFrame):
 
             btnClear.place_forget()
 
+        def loadProfilesTable():
+            tree.delete(*tree.get_children())
+
+            rows = getProfil()
+
+            for row in rows:
+                id = row[0]
+                name = row[1]
+                port = row[2]
+                baud = row[3]
+                timeout = row[4]
+                testC = row[5]
+                testR = row[6]
+                tree.insert("","end", values=(id, name, port, baud, timeout, testC, testR))
+
+
+
+
+        tableFrame = ctk.CTkFrame(
+            self.tabview.tab(texts[0]),
+            width=1500,
+            height=1000
+        )
+
+        tableFrame.place(x=30, y=240)
+
+        columns = ("id", "name", "port", "baudrate", "timeout", "testCmd", "testRes")
+
+        tree = ttk.Treeview(tableFrame, columns=columns, show="headings", height=23)
+
+        tree.heading("id", text="ID")
+        tree.heading("name", text="Name")
+        tree.heading("port", text="Port")
+        tree.heading("baudrate", text="Baudrate")
+        tree.heading("timeout", text="Timeout")
+        tree.heading("testCmd", text="Test Command")
+        tree.heading("testRes", text="Test Result")
+
+        tree.column("id", width=100, anchor="center")
+        tree.column("name", width=200)
+        tree.column("port", width=100)
+        tree.column("baudrate", width=200)
+        tree.column("timeout", width=200)
+        tree.column("testCmd", width=200)
+        tree.column("testRes", width=250)
+
+        tree.pack(side="left", fill="both", expand=True)
+
+        scrollY = ttk.Scrollbar(tableFrame, orient="vertical", command=tree.yview)
+
+        tree.configure(yscrollcommand=scrollY.set)
+
+        scrollY.place(x=1234, y=0, height=1000)
+        loadProfilesTable()
+
     def preferences(self):
         pref = ctk.CTkToplevel(self)
         pref.geometry("500x400+400+400")
@@ -263,18 +375,29 @@ class panel(ctk.CTkFrame):
 
         ctk.CTkLabel(pref, text="Preferences", font=("Helvetica", 46, "bold")).place(x=30, y=20)
         ttk.Separator(pref, orient="horizontal").place(width=458, x=20, y=80)
-        ctk.CTkLabel(pref, text="timeout if arduino won't answer", font=("Segoe UI", 16, "bold")).place(x=30, y=90)
+        ctk.CTkLabel(pref, text="Timeout if arduino won't answer", font=("Segoe UI", 16, "bold")).place(x=30, y=90)
 
         timeout = config.getboolean("program", "timeout")
-        switch = ctk.CTkSwitch(inner, text="")
+        TOSwitch = ctk.CTkSwitch(inner, text="")
         if timeout:
-            switch.select()
+            TOSwitch.select()
         else:
-            switch.deselect()
+            TOSwitch.deselect()
 
-        switch.place(x=420, y=90)
+        TOSwitch.place(x=420, y=90)
 
-        ctk.CTkButton(inner, text="Confirm", command=lambda: self.btnCon(pref, switch), width=200).place(x=260, y=330)
+        ctk.CTkLabel(pref, text="Clear selection after edit in profile", font=("Segoe UI", 16, "bold")).place(x=30, y=130)
+
+        ClearIn = config.getboolean("program", "ClearProfilSelection")
+        InSwitch = ctk.CTkSwitch(inner, text="")
+        if ClearIn:
+            InSwitch.select()
+        else:
+            InSwitch.deselect()
+
+        InSwitch.place(x=420, y=130)
+
+        ctk.CTkButton(inner, text="Confirm", command=lambda: self.btnCon(pref, TOSwitch, InSwitch), width=200).place(x=260, y=330)
         ctk.CTkButton(inner, text="Cancel", command=lambda: pref.destroy(), width=200).place(x=30, y=330)
 
 
