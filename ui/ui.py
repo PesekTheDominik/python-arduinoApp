@@ -307,7 +307,7 @@ class panel(ctk.CTkFrame):
             btnClear.place_forget()
 
         def loadProfilesTable():
-            tree.delete(*tree.get_children())
+            tProfil.delete(*tProfil.get_children())
 
             rows = getProfil()
 
@@ -319,47 +319,110 @@ class panel(ctk.CTkFrame):
                 timeout = row[4]
                 testC = row[5]
                 testR = row[6]
-                tree.insert("","end", values=(id, name, port, baud, timeout, testC, testR))
+                tProfil.insert("","end", values=(id, name, port, baud, timeout, testC, testR))
 
+        def tProfilChange(event):
+            selected = tProfil.selection()
 
+            if selected:
+                values = tProfil.item(selected[0], "values")
+                cbProfil.set(values[1])
+                loadProfil(values[1])
 
-
-        tableFrame = ctk.CTkFrame(
+        fProfil = ctk.CTkFrame(
             self.tabview.tab(texts[0]),
             width=1500,
             height=1000
         )
 
-        tableFrame.place(x=30, y=240)
+        fProfil.place(x=30, y=240)
 
         columns = ("id", "name", "port", "baudrate", "timeout", "testCmd", "testRes")
 
-        tree = ttk.Treeview(tableFrame, columns=columns, show="headings", height=23)
+        tProfil = ttk.Treeview(fProfil, columns=columns, show="headings", height=23)
 
-        tree.heading("id", text="ID")
-        tree.heading("name", text="Name")
-        tree.heading("port", text="Port")
-        tree.heading("baudrate", text="Baudrate")
-        tree.heading("timeout", text="Timeout")
-        tree.heading("testCmd", text="Test Command")
-        tree.heading("testRes", text="Test Result")
+        tProfil.heading("id", text="ID")
+        tProfil.heading("name", text="Name")
+        tProfil.heading("port", text="Port")
+        tProfil.heading("baudrate", text="Baudrate")
+        tProfil.heading("timeout", text="Timeout")
+        tProfil.heading("testCmd", text="Test Command")
+        tProfil.heading("testRes", text="Test Result")
 
-        tree.column("id", width=100, anchor="center")
-        tree.column("name", width=200)
-        tree.column("port", width=100)
-        tree.column("baudrate", width=200)
-        tree.column("timeout", width=200)
-        tree.column("testCmd", width=200)
-        tree.column("testRes", width=250)
+        tProfil.column("id", width=100, anchor="center")
+        tProfil.column("name", width=200)
+        tProfil.column("port", width=100)
+        tProfil.column("baudrate", width=200)
+        tProfil.column("timeout", width=200)
+        tProfil.column("testCmd", width=200)
+        tProfil.column("testRes", width=250)
 
-        tree.pack(side="left", fill="both", expand=True)
+        tProfil.pack(side="left", fill="both", expand=True)
 
-        scrollY = ttk.Scrollbar(tableFrame, orient="vertical", command=tree.yview)
+        scrollY = ttk.Scrollbar(fProfil, orient="vertical", command=tProfil.yview)
 
-        tree.configure(yscrollcommand=scrollY.set)
+        tProfil.configure(yscrollcommand=scrollY.set)
 
         scrollY.place(x=1234, y=0, height=1000)
         loadProfilesTable()
+
+        tProfil.bind("<<TreeviewSelect>>", tProfilChange)
+
+        #--------------------------tab 2------------------------------------------------#
+        fMethod = ctk.CTkFrame(
+            self.tabview.tab(texts[1]),
+            width=1500,
+            height=1000
+        )
+
+        fMethod.place(x=30, y=240)
+
+        columns = ("id", "name", "info", "dateIn", "deleted")
+
+        tMethod = ttk.Treeview(
+            fMethod,
+            columns=columns,
+            show="headings",
+            height=23
+        )
+
+        tMethod.heading("id", text="ID")
+        tMethod.heading("name", text="Name")
+        tMethod.heading("info", text="Info")
+        tMethod.heading("dateIn", text="Created")
+        tMethod.heading("deleted", text="Deleted")
+
+        tMethod.column("id", width=80, anchor="center")
+        tMethod.column("name", width=250)
+        tMethod.column("info", width=500)
+        tMethod.column("dateIn", width=250)
+        tMethod.column("deleted", width=100, anchor="center")
+
+        tMethod.pack(side="left", fill="both", expand=True)
+
+        scrollY = ttk.Scrollbar(fMethod, orient="vertical", command=tMethod.yview)
+
+        tMethod.configure(yscrollcommand=scrollY.set)
+
+        scrollY.place(x=1234, y=0, height=1000)
+        loadProfilesTable()
+        methodNames = getMethodNames()
+        cbMethod = ctk.CTkComboBox(self.tabview.tab(texts[1]), values=methodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: loadProfil(choice),width=180, height=30)
+        cbMethod.place(x=250, y=20)
+        
+        def loadProfilesTable():
+            tMethod.delete(*tMethod.get_children())
+
+            rows = getMethod()
+
+            for row in rows:
+                id = row[0]
+                name = row[1]
+                info = row[2]
+                dateIn = row[3]
+                deleted = row[4]
+                tMethod.insert("","end", values=(id, name, info, dateIn, deleted))
+
 
     def preferences(self):
         pref = ctk.CTkToplevel(self)

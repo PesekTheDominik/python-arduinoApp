@@ -51,13 +51,13 @@ def createTables():
     """)
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS method(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE,
-            info TEXT,
-            dateIn DATETIME DEFAULT CURRENT_TIMESTAMP,
-            deleted INTEGER 
-        )
+            CREATE TABLE IF NOT EXISTS method(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE,
+                info TEXT,
+                dateIn DATETIME DEFAULT CURRENT_TIMESTAMP,
+                deleted INTEGER 
+            )
     """)
 
     cursor.execute("""
@@ -289,6 +289,22 @@ def addMethod(name, info, dateIn, deleted):
     """, (name, info, dateIn, deleted))
     conn.commit()
     conn.close()
+
+def getMethod():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM method")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+def getMethodNames():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM method")
+    rows = cursor.fetchall()
+    conn.close()
+    return [(row[0]) for row in rows]
 
 def addCmd(method, info, time, instrument, command, parameter, code, timeout):
     conn = connect()
