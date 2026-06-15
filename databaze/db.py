@@ -367,6 +367,14 @@ def addCmd(method, info, time, instrument, command, parameter, code, timeout):
     conn.commit()
     conn.close()
 
+def getCmd():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM cmdLines")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
 def addLog(method ,executed ,info ,time,instrument,command ,parameter ,code ,response):
     conn = connect()
     cursor = conn.cursor()

@@ -538,6 +538,74 @@ class panel(ctk.CTkFrame):
                 else:
                     tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
 
+    
+        #--------------------------tab 2------------------------------------------------#
+        fcmd = ctk.CTkFrame(
+            self.tabview.tab(texts[2]),
+            width=1500,
+            height=1000
+        )
+
+        fcmd.place(x=30, y=240)
+
+        columns = ("id", "method", "info", "time", "instrument", "command", "parameter", "code", "timeout")
+
+        tcmd = ttk.Treeview(fcmd, columns=columns, show="headings", height=23)
+
+        tcmd.heading("id", text="ID")
+        tcmd.heading("method", text="method")
+        tcmd.heading("info", text="info")
+        tcmd.heading("time", text="time")
+        tcmd.heading("instrument", text="instrument")
+        tcmd.heading("command", text="command")
+        tcmd.heading("parameter", text="parameter")
+        tcmd.heading("code", text="code")
+        tcmd.heading("timeout", text="timeout")
+
+        tcmd.column("id", width=100, anchor="center")
+        tcmd.column("method", width=150)
+        tcmd.column("info", width=200)
+        tcmd.column("time", width=100)
+        tcmd.column("instrument", width=150)
+        tcmd.column("command", width=150)
+        tcmd.column("parameter", width=150)
+        tcmd.column("code", width=150)
+        tcmd.column("timeout", width=100)
+
+        tcmd.pack(side="left", fill="both", expand=True)
+
+        scrollY = ttk.Scrollbar(fcmd, orient="vertical", command=tcmd.yview)
+
+        tcmd.configure(yscrollcommand=scrollY.set)
+
+        scrollY.place(x=1234, y=0, height=1000)
+
+        cmdMethodNames = getMethodNames()
+        cbCmdMet = ctk.CTkComboBox(self.tabview.tab(texts[2]), values=cmdMethodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: cmdLoadMethod(choice),width=180, height=30)
+
+        tbCmdInfo =  ctk.CTkTextbox(self.tabview.tab(texts[2]), width=150, height=30,border_width=2, border_color="#1492c4")
+
+        def cmdLoadMethod(choice):
+            print()
+
+        def loadCmdTable():
+            tcmd.delete(*tcmd.get_children())
+
+            rows = getCmd() 
+
+            for row in rows:
+                id = row[0]
+                method = row[1]
+                info = row[2]
+                time = row[3]
+                instrument = row[4]
+                command = row[5]
+                parameter = row[6]
+                code = row[7]
+                timeout = row[8]
+                tMethod.insert("","end", values=(id, method, info, time, instrument, command, parameter,code, timeout))
+        loadCmdTable()
+
 
     def preferences(self):
         pref = ctk.CTkToplevel(self)
