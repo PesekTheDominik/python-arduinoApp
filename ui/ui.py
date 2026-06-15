@@ -407,9 +407,23 @@ class panel(ctk.CTkFrame):
         scrollY.place(x=1234, y=0, height=1000)
         loadProfilesTable()
         methodNames = getMethodNames()
+        ctk.CTkLabel(self.tabview.tab(texts[1]), text="Select Method:", font=("Segoe UI", 16, "bold")).place(x=30, y=20)
         cbMethod = ctk.CTkComboBox(self.tabview.tab(texts[1]), values=methodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: loadProfil(choice),width=180, height=30)
-        cbMethod.place(x=250, y=20)
-        
+        cbMethod.place(x = 180, y=20)
+
+        ctk.CTkFrame( self.tabview.tab(texts[1]), width=2, height=40, fg_color="#666666").place(x=380, y=15)
+        ctk.CTkLabel(self.tabview.tab(texts[1]), text="Method name:", font=("Segoe UI", 16, "bold")).place(x=400, y=20)
+        tbMetName = ctk.CTkTextbox(self.tabview.tab(texts[1]), width=150, height=30,border_width=2, border_color="#1492c4")
+        tbMetName.place(x=540, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[1]), text="info :", font=("Segoe UI", 16, "bold")).place(x=720, y=20) 
+        tbMetInfo = ctk.CTkTextbox(self.tabview.tab(texts[1]), width=320, height=30,border_width=2, border_color="#1492c4")
+        tbMetInfo.place(x=790, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[1]), text="Deleted :", font=("Segoe UI", 16, "bold")).place(x=1150, y=20) 
+        swDeleted = ctk.CTkSwitch(self.tabview.tab(texts[1]), text="")
+        swDeleted.place(x=1250,y=20)
+        btnMetEditor = ctk.CTkButton(self.tabview.tab(texts[1]),width=160,  height=30, command=lambda: newMethod(),font=("Segoe UI", 16, "bold"), text="New")
+        btnMetEditor.place(x=30,y=80)
+
         def loadProfilesTable():
             tMethod.delete(*tMethod.get_children())
 
@@ -422,6 +436,28 @@ class panel(ctk.CTkFrame):
                 dateIn = row[3]
                 deleted = row[4]
                 tMethod.insert("","end", values=(id, name, info, dateIn, deleted))
+
+        #nedokonceny, nepouzivat 
+        def newMethod():
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
+            if proceed:
+                Mname = tbName.get("1.0", "end").strip()
+                Mport = cbPorts.get()
+                Mbaud = cbBaudRate.get()
+                Mcommand = cbCommands.get()
+                Mtimeout = tbTimeout.get("1.0", "end").strip()
+                if Mname and Mtimeout and Mport and Mbaud and Mcommand:
+                    if countProfilByName(Mname) < 1:
+                        addProfil(Mname, Mport, Mbaud, Mtimeout, Mcommand)
+                        profilNames = getProfilName()
+                        cbProfil.configure(values=profilNames)
+                        clearInputs()
+                        if profilLen == 0:
+                            profilLen
+                        if profilLen == 0:
+                            btnDelete.place(x=930, y=80)
+                else:
+                    tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
 
 
     def preferences(self):
