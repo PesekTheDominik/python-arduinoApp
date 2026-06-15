@@ -280,15 +280,57 @@ def clearCommands():
     conn.commit()
     conn.close()
 
-def addMethod(name, info, dateIn, deleted):
+def addMethod(name, info, deleted):
     conn = connect()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO method (name, info, dateIn, deleted)
-        VALUES (?,?,?,?)
-    """, (name, info, dateIn, deleted))
+        INSERT INTO method (name, info,deleted)
+        VALUES (?,?,?)
+    """, (name, info, deleted))
     conn.commit()
     conn.close()
+
+def updateMethod(name, info, deleted, id):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE method
+        SET name = ?, info = ?, deleted = ?
+        WHERE id = ?
+    """, (name, info, deleted, id))
+    conn.commit()
+    conn.close()
+
+def clearMethod():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM method")
+    conn.commit()
+    conn.close()
+
+def deteleMethod(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM method WHERE name = ?", (name,))
+    conn.commit()
+    conn.close()
+
+def getMethodId(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM method WHERE name = ?", (name, ))
+    id = cursor.fetchone()
+    conn.close()
+    return id[0] if id else None   
+
+def getMethodByName(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM method WHERE name = ?", (name, ))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return row
 
 def getMethod():
     conn = connect()
@@ -305,6 +347,14 @@ def getMethodNames():
     rows = cursor.fetchall()
     conn.close()
     return [(row[0]) for row in rows]
+
+def countMethodByName(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM method WHERE name = ?", (name,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
 
 def addCmd(method, info, time, instrument, command, parameter, code, timeout):
     conn = connect()

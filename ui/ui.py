@@ -20,7 +20,7 @@ config.read(resource_path("settings/settings.ini"))
 
 lightImg = ctk.CTkImage(Image.open(resource_path("images/sun2.png")))
 darkImg = ctk.CTkImage(Image.open(resource_path("images/moon.png"))) 
-texts = ["Set up Device","Edit methods", "Edit commands","Run", "Log"]
+texts = ["Set up Device","Create methods", "Configure Methods","Run", "Log"]
 connection = arduino()
 
 currentMode = False
@@ -258,6 +258,10 @@ class panel(ctk.CTkFrame):
                         cbProfil.configure(values=getProfilName())
                         if int(config.get("program", "clearprofilselection")) == 1:
                             clearInputs()
+                    else:
+                        tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
+                else:
+                    tk.messagebox.showwarning(title="Warning", message="All inputs must be filled in to create a profile")
 
 
         def delProfil():
@@ -286,10 +290,13 @@ class panel(ctk.CTkFrame):
                             profilLen
                         if profilLen == 0:
                             btnDelete.place(x=930, y=80)
+                    else:    
+                        tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
                 else:
-                    tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
+                    tk.messagebox.showwarning(title="Warning", message="All inputs must be filled in to create a profile")
 
         def clearProf():
+            tProfil.selection_remove(tProfil.selection())
             clearInputs()
             btnEditor.configure(text="New", command=lambda: newProfil())       
             btnDelete.configure(text="Delete all", command=lambda: delAllProfils())
@@ -371,11 +378,11 @@ class panel(ctk.CTkFrame):
         #--------------------------tab 2------------------------------------------------#
         fMethod = ctk.CTkFrame(
             self.tabview.tab(texts[1]),
-            width=1500,
+            width=2000,
             height=1000
         )
 
-        fMethod.place(x=30, y=240)
+        fMethod.place(x=70, y=240)
 
         columns = ("id", "name", "info", "dateIn", "deleted")
 
@@ -405,12 +412,12 @@ class panel(ctk.CTkFrame):
         tMethod.configure(yscrollcommand=scrollY.set)
 
         scrollY.place(x=1234, y=0, height=1000)
-        loadProfilesTable()
+
+
         methodNames = getMethodNames()
         ctk.CTkLabel(self.tabview.tab(texts[1]), text="Select Method:", font=("Segoe UI", 16, "bold")).place(x=30, y=20)
-        cbMethod = ctk.CTkComboBox(self.tabview.tab(texts[1]), values=methodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: loadProfil(choice),width=180, height=30)
+        cbMethod = ctk.CTkComboBox(self.tabview.tab(texts[1]), values=methodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: loadMethod(choice),width=180, height=30)
         cbMethod.place(x = 180, y=20)
-
         ctk.CTkFrame( self.tabview.tab(texts[1]), width=2, height=40, fg_color="#666666").place(x=380, y=15)
         ctk.CTkLabel(self.tabview.tab(texts[1]), text="Method name:", font=("Segoe UI", 16, "bold")).place(x=400, y=20)
         tbMetName = ctk.CTkTextbox(self.tabview.tab(texts[1]), width=150, height=30,border_width=2, border_color="#1492c4")
@@ -421,10 +428,14 @@ class panel(ctk.CTkFrame):
         ctk.CTkLabel(self.tabview.tab(texts[1]), text="Deleted :", font=("Segoe UI", 16, "bold")).place(x=1150, y=20) 
         swDeleted = ctk.CTkSwitch(self.tabview.tab(texts[1]), text="")
         swDeleted.place(x=1250,y=20)
-        btnMetEditor = ctk.CTkButton(self.tabview.tab(texts[1]),width=160,  height=30, command=lambda: newMethod(),font=("Segoe UI", 16, "bold"), text="New")
-        btnMetEditor.place(x=30,y=80)
+        btnMetEditor = ctk.CTkButton(self.tabview.tab(texts[1]),width=590,  height=30, command=lambda: newMethod(),font=("Segoe UI", 16, "bold"), text="New")
+        btnMetEditor.place(x=60,y=80)
+        btnMetDelete = ctk.CTkButton(self.tabview.tab(texts[1]),width=590,  height=30, command=lambda: metDeleteAll(),font=("Segoe UI", 16, "bold"), text="Delete All")
+        btnMetDelete.place(x=680, y=80)
+        btnMetClear =  ctk.CTkButton(self.tabview.tab(texts[1]),width=1212,  height=30, command=lambda: clearMetSelect(),font=("Segoe UI", 16, "bold"), text="Clear Select")
+        btnMetClear.place(x=59, y=130)
 
-        def loadProfilesTable():
+        def loadMethodTable():
             tMethod.delete(*tMethod.get_children())
 
             rows = getMethod()
@@ -437,25 +448,93 @@ class panel(ctk.CTkFrame):
                 deleted = row[4]
                 tMethod.insert("","end", values=(id, name, info, dateIn, deleted))
 
-        #nedokonceny, nepouzivat 
+        loadMethodTable()
+
+        def metDeleteAll(): 
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
+            if proceed:
+                clearMethod()
+                loadMethodTable()
+                clearMetInputs()
+
+        def metDelete(): 
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
+            if proceed:
+                deteleMethod(tbMetName.get("1.0", "end").strip())
+                loadMethodTable()
+                clearMetInputs()
+
+        def clearMetSelect():
+            tMethod.selection_remove(tMethod.selection())                            
+            clearInputs()
+            btnMetEditor.configure(text="New", command=lambda: newMethod())       
+            btnMetDelete.configure(text="Delete all", command=lambda: metDeleteAll())
+            btnConnect.place_forget()
+            btnClear.place_forget()
+
+        def tMethodChange(event):
+            selected = tMethod.selection()
+
+            if selected:
+                values = tMethod.item(selected[0], "values")
+                cbMethod.set(values[1])
+                loadMethod(values[1])
+
+        tMethod.bind("<<TreeviewSelect>>", tMethodChange)
+
+        def loadMethod(choice):
+            method = getMethodByName(choice)
+            tbMetName.delete("1.0", "end")
+            tbMetName.insert("1.0", method[1])
+            tbMetInfo.delete("1.0", "end")
+            tbMetInfo.insert("1.0", method[2])
+            if method[3] == 1:
+                swDeleted.select()
+            else:
+                swDeleted.deselect()
+
+            btnMetEditor.configure(text="Edit", command=lambda: editMethod())
+            btnMetDelete.configure(text="Delete Selected", command=lambda: metDelete())
+
+
+        def clearMetInputs():
+            cbMethod.set("")
+            tbMetName.delete("1.0", "end")
+            tbMetInfo.delete("1.0", "end")
+            swDeleted.deselect()
+
+        def editMethod():
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
+            if proceed:
+                Mname = tbMetName.get("1.0", "end").strip()
+                Minfo = tbMetInfo.get("1.0", "end").strip()
+                if Mname and Minfo:
+                    if countMethodByName(Mname) < 2:
+                        id = getMethodId(cbMethod.get())
+                        updateMethod(Mname, Minfo, swDeleted.get(), id)
+                        if int(config.get("program", "clearprofilselection")) == 1:
+                            clearMetInputs()
+
+                        loadMethodTable()
+                    else:
+                        tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
+                else:
+                    tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
+
         def newMethod():
             proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
             if proceed:
-                Mname = tbName.get("1.0", "end").strip()
-                Mport = cbPorts.get()
-                Mbaud = cbBaudRate.get()
-                Mcommand = cbCommands.get()
-                Mtimeout = tbTimeout.get("1.0", "end").strip()
-                if Mname and Mtimeout and Mport and Mbaud and Mcommand:
-                    if countProfilByName(Mname) < 1:
-                        addProfil(Mname, Mport, Mbaud, Mtimeout, Mcommand)
-                        profilNames = getProfilName()
-                        cbProfil.configure(values=profilNames)
-                        clearInputs()
-                        if profilLen == 0:
-                            profilLen
-                        if profilLen == 0:
-                            btnDelete.place(x=930, y=80)
+                Mname = tbMetName.get("1.0", "end").strip()
+                Minfo = tbMetInfo.get("1.0", "end").strip()
+                if Mname and Minfo:
+                    if countMethodByName(Mname) < 1:
+                        addMethod(Mname, Minfo, swDeleted.get())
+                        methodNames = getMethodNames()
+                        cbMethod.configure(values=methodNames)
+                        loadMethodTable()
+                        clearMetInputs()
+                    else:
+                        tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
                 else:
                     tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
 
