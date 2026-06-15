@@ -579,11 +579,18 @@ class panel(ctk.CTkFrame):
         tcmd.configure(yscrollcommand=scrollY.set)
 
         scrollY.place(x=1234, y=0, height=1000)
-
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Select Method:", font=("Segoe UI", 16, "bold")).place(x=30, y=20)
         cmdMethodNames = getMethodNames()
         cbCmdMet = ctk.CTkComboBox(self.tabview.tab(texts[2]), values=cmdMethodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: cmdLoadMethod(choice),width=180, height=30)
+        cbCmdMet.place(x=160,y=20) 
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Info:", font=("Segoe UI", 16, "bold")).place(x=370, y=20)
+        tbCmdInfo = ctk.CTkTextbox(self.tabview.tab(texts[2]), width=300, height=30,border_width=2, border_color="#1492c4")
+        tbCmdInfo.place(x=430, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Time from start:", font=("Segoe UI", 16, "bold")).place(x=760, y=20)
+        tbCmdTime =  ctk.CTkTextbox(self.tabview.tab(texts[2]), width=150, height=30,border_width=2, border_color="#1492c4")
+        tbCmdTime.place(x=905, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="instrument:", font=("Segoe UI", 16, "bold")).place(x=760, y=20)
 
-        tbCmdInfo =  ctk.CTkTextbox(self.tabview.tab(texts[2]), width=150, height=30,border_width=2, border_color="#1492c4")
 
         def cmdLoadMethod(choice):
             print()
@@ -679,7 +686,60 @@ class panel(ctk.CTkFrame):
             Tcomand.insert("","end", values=(name, code, parameter, info))
 
 
+    def addInstrument(self):
+        wIns = ctk.CTkToplevel(self)
+        wIns.geometry("900x610+400+200")
+        wIns.overrideredirect(True)
+        wIns.configure(fg_color=("#f0f0f0","#1c1c1c"), corner_radius=50)   
+        outer = ctk.CTkFrame(wIns, fg_color=("#1c1c1c", "#f0f0f0"), corner_radius=3)
+        outer.pack(fill="both", expand=True, padx=4, pady=4)
 
+        inner = ctk.CTkFrame(outer, fg_color=("#f0f0f0","#1c1c1c"), corner_radius=4)
+        inner.pack(fill="both", expand=True, padx=2, pady=2)          
+        ctk.CTkLabel(wIns, text="Add Instrument", font=("Helvetica", 46, "bold")).place(x=30, y=20)    
+
+        tIns = ttk.Treeview(
+            wIns,
+            columns=("Name", "Address"),
+            show="headings"
+        )
+
+        tIns.heading("Name", text="Name")
+        tIns.heading("Address", text="Address")
+        tIns.place(x=20, y=100, width=850, height=300)
+        
+        scrollbar = ttk.Scrollbar(wIns, orient="vertical", command=tIns.yview)
+        tIns.configure(yscrollcommand=scrollbar.set)
+        scrollbar.place(x=852, y=101, height=298)
+        ctk.CTkButton(wIns, font=("Helvetica", 20 ,"bold"), text="X", command=lambda: wIns.destroy(), width=30, height=30, text_color=("black", "white"), border_width=2, border_color=("black","white") ,fg_color="transparent", hover_color="grey", corner_radius=15).place(x=810, y=37)
+
+        ctk.CTkLabel(wIns, text="name:", font=("Segoe UI", 16, "bold")).place(x=30, y=420)
+        tbInsName =  ctk.CTkTextbox(wIns, width=260, height=30,border_width=2, border_color="#1492c4")
+        ctk.CTkLabel(wIns, text="address:", font=("Segoe UI", 16, "bold")).place(x=500, y=420)
+        tbInsAddr =  ctk.CTkTextbox(wIns, width=260, height=30,border_width=2, border_color="#1492c4")
+        tbInsName.place(x=110, y=420)
+        tbInsAddr.place(x=590, y=420)
+
+        btnInsEditor = ctk.CTkButton(wIns,width=400,  height=30, command=lambda: newInstrument(),font=("Segoe UI", 16, "bold"), text="New")
+        btnInsDelete = ctk.CTkButton(wIns,width=400,  height=30, command=lambda: deleteIns(),font=("Segoe UI", 16, "bold"), text="Delete all")
+        btnInsClear = ctk.CTkButton(wIns,width=830,  height=30, command=lambda: clearSelIns(),font=("Segoe UI", 16, "bold"), text="Clear selection")
+        btnInsEditor.place(x=30, y=470)
+        btnInsDelete.place(x=460, y=470)
+        btnInsClear.place(x=30, y=510)
+
+        def clearSelIns():
+            print()
+
+        def deleteIns():
+            print()
+
+        def newInstrument():
+            print()
+
+        def tInsChange():
+            print()
+
+        tIns.bind("<<TreeviewSelect>>", tInsChange)
 
     def addCom(self):
         self.currentId = -1
@@ -832,10 +892,12 @@ class panel(ctk.CTkFrame):
         self.file_menu = StableDropdown(self)
         
         self.file_menu.add_separator()
-        self.file_menu.add_action("add Commands", "ctrl+a", command=lambda: self.addCom())
-        self.file_menu.add_action("Preferences", "Ctrl+n", command=lambda: self.preferences())
+        self.file_menu.add_action("add Commands", command=lambda: self.addCom())
+        self.file_menu.add_action("add Instrument", command=lambda: self.addInstrument())
+        self.file_menu.add_action("Preferences",  command=lambda: self.preferences())
         self.file_menu.add_separator()
-        self.file_menu.add_action("Quit", "Ctrl+Q", self.quit)
+        self.file_menu.add_action("Quit", command=lambda: self.quit)
+
         
         btnFile = ctk.CTkButton(
             toolbar, 
