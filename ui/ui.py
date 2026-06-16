@@ -727,17 +727,68 @@ class panel(ctk.CTkFrame):
         btnInsDelete.place(x=460, y=470)
         btnInsClear.place(x=30, y=510)
 
-        def clearSelIns():
+        def loadTIns():
+            tIns.delete(*tIns.get_children())
+            rows = getInstruments()
+
+            for row in rows:
+                name = row[1]
+                addr = row[2]
+                tIns.insert("","end", values=(name, addr))
+        loadTIns()
+
+        def deleteSelIns():
             print()
+
+        def editIns():
+            print()
+
+        def clearSelIns():
+            tIns.selection_remove(tIns.selection())                            
+            clearInsInput()
+            btnInsDelete.configure(text="Delete All", command=lambda: deleteIns())
+            btnInsEditor.configure(text="New", command= lambda: newInstrument())
 
         def deleteIns():
             print()
 
-        def newInstrument():
-            print()
+        def clearInsInput():
+            tbInsName.delete("1.0", "end")
+            tbInsName.insert("1.0", "")
+            tbInsAddr.delete("1.0", "end")
+            tbInsAddr.insert("1.0", "")
 
-        def tInsChange():
-            print()
+        def newInstrument():
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wIns)
+            if proceed:
+                Iname = tbInsName.get("1.0", "end").strip()
+                Iaddr = tbInsAddr.get("1.0", "end").strip()
+                if countInstrument(Iname) == 0:
+                    if Iname and Iaddr:
+                        addInstument(Iname, Iaddr)
+                        loadTIns()
+                        clearInsInput()
+                    else:
+                        tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wIns)
+                else:
+                    tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!", parent=wIns)
+            else:
+                return
+
+        def tInsChange(event):
+            btnInsDelete.configure(text="Delete selected", command=lambda: deleteSelIns())
+            btnInsEditor.configure(text="edit", command=lambda: editIns())
+            selectedItem = tIns.selection()
+            if not selectedItem:
+                return
+
+            vals = tIns.item(selectedItem[0], "values")
+
+            if vals:
+                tbInsName.delete("1.0", "end")
+                tbInsAddr.delete("1.0","end")
+                tbInsName.insert("1.0", vals[0])
+                tbInsAddr.insert("1.0", vals[1])
 
         tIns.bind("<<TreeviewSelect>>", tInsChange)
 

@@ -194,6 +194,22 @@ def addInstument(name, address):
     conn.commit()
     conn.close()
 
+def countInstrument(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM instrument WHERE name = ?", (name, ))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
+
+def getInstruments():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM instrument")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
 def addCommands(name,code ,parameter ,info ):
     conn = connect()
     cursor = conn.cursor()
