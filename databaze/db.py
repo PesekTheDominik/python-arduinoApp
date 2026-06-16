@@ -210,6 +210,39 @@ def getInstruments():
     conn.close()
     return rows
 
+def updateInstrument(name, address, id):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE instrument
+        SET name = ?, address = ?
+        WHERE id = ?
+    """, (name, address, id))
+    conn.commit()
+    conn.close()
+
+def getInstrumentId(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM instrument WHERE name = ?", (name,))
+    id = cursor.fetchone()[0]
+    conn.close()
+    return id
+
+def clearInstrument():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM instrument")
+    conn.commit()
+    conn.close()
+
+def deleteInstrument(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM instrument WHERE name = ?", (name,)) 
+    conn.commit()
+    conn.close()
+
 def addCommands(name,code ,parameter ,info ):
     conn = connect()
     cursor = conn.cursor()

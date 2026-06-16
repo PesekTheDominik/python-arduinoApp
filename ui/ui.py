@@ -738,19 +738,54 @@ class panel(ctk.CTkFrame):
         loadTIns()
 
         def deleteSelIns():
-            print()
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wIns)
+            if proceed:
+                selectedItem = tIns.selection()
+                if not selectedItem:
+                    return
+
+                vals = tIns.item(selectedItem[0], "values")
+                name = vals[0]
+                deleteInstrument(name)
+                loadTIns()
+                clearInsInput()
 
         def editIns():
-            print()
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wIns)
+            if proceed:
+                Iname = tbInsName.get("1.0", "end").strip()
+                Iaddr = tbInsAddr.get("1.0", "end").strip()
+                if countInstrument(Iname) < 2:
+                    if Iname and Iaddr:
+                        selectedItem = tIns.selection()
+                        if not selectedItem:
+                            return
+
+                        vals = tIns.item(selectedItem[0], "values")
+                        name = vals[0]
+                        id = getInstrumentId(name)
+                        updateInstrument(Iname, Iaddr, id)
+                        loadTIns()
+                        clearInsInput()
+                    else:
+                        tk.messagebox.showwarning(title="warning", message="You must fill all of the information when editing a command", parent=wIns)
+                else:
+                    tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!", parent=wIns)
+            else:
+                return
 
         def clearSelIns():
-            tIns.selection_remove(tIns.selection())                            
-            clearInsInput()
             btnInsDelete.configure(text="Delete All", command=lambda: deleteIns())
             btnInsEditor.configure(text="New", command= lambda: newInstrument())
+            tIns.selection_remove(tIns.selection())                            
+            clearInsInput()
 
         def deleteIns():
-            print()
+            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wIns)
+            if proceed:
+                clearInstrument()
+                loadTIns()
+                clearInsInput()
 
         def clearInsInput():
             tbInsName.delete("1.0", "end")
@@ -776,11 +811,13 @@ class panel(ctk.CTkFrame):
                 return
 
         def tInsChange(event):
-            btnInsDelete.configure(text="Delete selected", command=lambda: deleteSelIns())
-            btnInsEditor.configure(text="edit", command=lambda: editIns())
+
             selectedItem = tIns.selection()
             if not selectedItem:
                 return
+            
+            btnInsDelete.configure(text="Delete selected", command=lambda: deleteSelIns())
+            btnInsEditor.configure(text="edit", command=lambda: editIns())
 
             vals = tIns.item(selectedItem[0], "values")
 
