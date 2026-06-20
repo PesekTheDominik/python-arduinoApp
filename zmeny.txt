@@ -1,0 +1,4 @@
+v3
+    dodělal jsem část "create methods"
+    rozpracoval jsem část "configure methods"
+    přidal jsem okno "add instrument"

@@ -229,6 +229,14 @@ def getInstrumentId(name):
     conn.close()
     return id
 
+def getInstrumentNames():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM instrument")
+    rows = cursor.fetchall()
+    conn.close()
+    return [row[0] for row in rows]
+
 def clearInstrument():
     conn = connect()
     cursor = conn.cursor()

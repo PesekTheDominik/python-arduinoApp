@@ -120,6 +120,7 @@ class panel(ctk.CTkFrame):
 
     def setup_tabs(self):
         #--------------------------tab 1------------------------------------------------#
+        profilMode = {"value": False}
         baudRates = ["300","1200","2400","4800","9600","19200","38400","57600","115200","230400","460800","921600",]
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Select your device profile: ",font=("Segoe UI", 16, "bold")).place(x=30,y=20)
         profilNames = getProfilName()
@@ -163,7 +164,13 @@ class panel(ctk.CTkFrame):
         btnAddi = ctk.CTkButton(self.tabview.tab(texts[0]), height=30,width=160, command=lambda: sendAddi(),font=("Segoe UI", 16, "bold"), text="Test")
         lblAns = ctk.CTkLabel(self.tabview.tab(texts[0]), text="Answer: ",font=("Segoe UI", 16, "bold"))    
         tbAns = ctk.CTkTextbox(self.tabview.tab(texts[0]), state="disabled", width=410, height=30,border_width=2, border_color="#1492c4")
-        
+
+        tbName.configure(state="disabled", border_color="#cc1a0d")
+        cbPorts.configure(state="disabled", border_color="#cc1a0d")
+        cbBaudRate.configure(state="disabled", border_color="#cc1a0d")
+        tbTimeout.configure(state="disabled", border_color="#cc1a0d")
+        cbCommands.configure(state="disabled", border_color="#cc1a0d")
+
         btnEditor.place(x=730, y=80)
 
         def sendAddi():
@@ -244,25 +251,49 @@ class panel(ctk.CTkFrame):
 
 
         def editProfil():
-            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede? \nBy editing you will delete testCmd result")
-            if proceed:
-                id = getProfilId(cbProfil.get())
-                Pname = tbName.get("1.0", "end").strip()
-                Pport = cbPorts.get()
-                Pbaud = int(cbBaudRate.get())
-                Pcommand = cbCommands.get()
-                Ptimeout = float(tbTimeout.get("1.0", "end").strip())
-                if Pname and Ptimeout and Pport and Pbaud and Pcommand:
-                    if countProfilByName(Pname) < 2:
-                        updateProfil(Pname, Pport, Pbaud, Ptimeout,Pcommand, id)
-                        cbProfil.configure(values=getProfilName())
-                        if int(config.get("program", "clearprofilselection")) == 1:
-                            clearInputs()
-                    else:
-                        tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
-                else:
-                    tk.messagebox.showwarning(title="Warning", message="All inputs must be filled in to create a profile")
+            if profilMode["value"]:
+                proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede? \nBy editing you will delete testCmd result")
+                if proceed:
+                    profilMode["values"] = False
+                    id = getProfilId(cbProfil.get())
+                    Pname = tbName.get("1.0", "end").strip()
+                    Pport = cbPorts.get()
 
+                    Pbaud = int(cbBaudRate.get())
+                    Pcommand = cbCommands.get()
+                    Ptimeout = float(tbTimeout.get("1.0", "end").strip())
+                    if Pname and Ptimeout and Pport and Pbaud and Pcommand:
+                        if countProfilByName(Pname) < 2:
+                            updateProfil(Pname, Pport, Pbaud, Ptimeout,Pcommand, id)
+                            cbProfil.configure(values=getProfilName())
+                            if int(config.get("program", "clearprofilselection")) == 1:
+                                clearInputs()
+                        else:
+                            tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
+                    else:
+                        tk.messagebox.showwarning(title="Warning", message="All inputs must be filled in to create a profile")
+            else:
+                profilMode["values"] = True 
+                tbName.configure(state="normal", border_color="#1492c4")
+                cbPorts.configure(state="normal", border_color="#1492c4")
+                cbBaudRate.configure(state="normal", border_color="#1492c4")
+                tbTimeout.configure(state="normal", border_color="#1492c4")
+                cbCommands.configure(state="normal", border_color="#1492c4")
+                selectedItem = tProfil.selection()
+                if not selectedItem:
+                    return
+                
+                vals = tProfil.item(selectedItem[0], "values")
+
+                if vals:
+                    tbName.delete("1.0", "end")
+                    tbName.insert("1.0", vals[1])
+                    cbPorts.set(vals[2])
+                    cbBaudRate.set(vals[3])
+                    tbTimeout.delete("1.0", "end")
+                    tbTimeout.insert("1.0", vals[4])
+                    cbCommands.delete("1.0", "end")
+                    cbCommands.insert("1.0", vals[5])
 
         def delProfil():
             proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede? \nBy editing you will delete testCmd result")
@@ -273,27 +304,36 @@ class panel(ctk.CTkFrame):
                     cbProfil.configure(values=getProfilName())
 
         def newProfil():
-            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
-            if proceed:
-                Pname = tbName.get("1.0", "end").strip()
-                Pport = cbPorts.get()
-                Pbaud = cbBaudRate.get()
-                Pcommand = cbCommands.get()
-                Ptimeout = tbTimeout.get("1.0", "end").strip()
-                if Pname and Ptimeout and Pport and Pbaud and Pcommand:
-                    if countProfilByName(Pname) < 1:
-                        addProfil(Pname, Pport, Pbaud, Ptimeout, Pcommand)
-                        profilNames = getProfilName()
-                        cbProfil.configure(values=profilNames)
-                        clearInputs()
-                        if profilLen == 0:
-                            profilLen
-                        if profilLen == 0:
-                            btnDelete.place(x=930, y=80)
-                    else:    
-                        tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
-                else:
-                    tk.messagebox.showwarning(title="Warning", message="All inputs must be filled in to create a profile")
+            if profilMode["value"]:
+                proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
+                if proceed:
+                    Pname = tbName.get("1.0", "end").strip()
+                    Pport = cbPorts.get()
+                    Pbaud = cbBaudRate.get()
+                    Pcommand = cbCommands.get()
+                    Ptimeout = tbTimeout.get("1.0", "end").strip()
+                    profilMode["value"] = False 
+                    if Pname and Ptimeout and Pport and Pbaud and Pcommand:
+                        if countProfilByName(Pname) < 1:
+                            addProfil(Pname, Pport, Pbaud, Ptimeout, Pcommand)
+                            profilNames = getProfilName()
+                            cbProfil.configure(values=profilNames)
+                            clearInputs()
+                            if profilLen == 0:
+                                profilLen
+                            if profilLen == 0:
+                                btnDelete.place(x=930, y=80)
+                        else:    
+                            tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
+                    else:
+                        tk.messagebox.showwarning(title="Warning", message="All inputs must be filled in to create a profile")
+            else:
+                profilMode["value"] = True
+                tbName.configure(state="normal", border_color="#1492c4")
+                cbPorts.configure(state="normal", border_color="#1492c4")
+                cbBaudRate.configure(state="normal", border_color="#1492c4")
+                tbTimeout.configure(state="normal", border_color="#1492c4")
+                cbCommands.configure(state="normal", border_color="#1492c4")
 
         def clearProf():
             tProfil.selection_remove(tProfil.selection())
@@ -581,16 +621,31 @@ class panel(ctk.CTkFrame):
         scrollY.place(x=1234, y=0, height=1000)
         ctk.CTkLabel(self.tabview.tab(texts[2]), text="Select Method:", font=("Segoe UI", 16, "bold")).place(x=30, y=20)
         cmdMethodNames = getMethodNames()
-        cbCmdMet = ctk.CTkComboBox(self.tabview.tab(texts[2]), values=cmdMethodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: cmdLoadMethod(choice),width=180, height=30)
+        cbCmdMet = ctk.CTkComboBox(self.tabview.tab(texts[2]), values=cmdMethodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: cmdLoadMethod(choice),width=160, height=30)
         cbCmdMet.place(x=160,y=20) 
-        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Info:", font=("Segoe UI", 16, "bold")).place(x=370, y=20)
-        tbCmdInfo = ctk.CTkTextbox(self.tabview.tab(texts[2]), width=300, height=30,border_width=2, border_color="#1492c4")
-        tbCmdInfo.place(x=430, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Time from start:", font=("Segoe UI", 16, "bold")).place(x=760, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Info:", font=("Segoe UI", 16, "bold")).place(x=340, y=20)
+        tbCmdInfo = ctk.CTkTextbox(self.tabview.tab(texts[2]), width=270, height=30,border_width=2, border_color="#1492c4")
+        tbCmdInfo.place(x=400, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Time from start:", font=("Segoe UI", 16, "bold")).place(x=690, y=20)
         tbCmdTime =  ctk.CTkTextbox(self.tabview.tab(texts[2]), width=150, height=30,border_width=2, border_color="#1492c4")
-        tbCmdTime.place(x=905, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[2]), text="instrument:", font=("Segoe UI", 16, "bold")).place(x=760, y=20)
+        tbCmdTime.place(x=835, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="instrument:", font=("Segoe UI", 16, "bold")).place(x=1010, y=20)
+        cmdInsNames = getInstrumentNames()
+        cbCmdIns = ctk.CTkComboBox(self.tabview.tab(texts[2]), values=cmdInsNames, state="readonly",font=("Segoe UI", 16, "bold"),width=160, height=30)
+        cbCmdIns.place(x=1120, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="commands:", font=("Segoe UI", 16, "bold")).place(x=30, y=80)
+        commands = [c[:-1] for c in getCommandsName()]
+        cbCmdCommands = ctk.CTkComboBox(self.tabview.tab(texts[2]), width=150, height=30, values=commands , state="readonly", command=lambda choice: loadCmdCommands(choice))
+        tbCmdParameter = ctk.CTkTextbox(self.tabview.tab(texts[2]), width=100, height=30,border_width=2, border_color="#1492c4")
 
+        cbCmdCommands.place(x=150, y=80)
+
+        def loadCmdCommands(choice):
+            par = getCommandsPar(choice)
+            if par == 1:
+                tbCmdParameter.place(x=320, y=80)
+            else:
+                tbCmdParameter.place_forget()
 
         def cmdLoadMethod(choice):
             print()
@@ -654,23 +709,6 @@ class panel(ctk.CTkFrame):
         ctk.CTkButton(inner, text="Cancel", command=lambda: pref.destroy(), width=200).place(x=30, y=330)
 
 
-    def newCommand(self, comName, code, par, info, Tcomand, wadd):
-        proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wadd)
-        if proceed:
-            Fname = comName.get("1.0", "end").strip()
-            Fcode = code.get("1.0", "end").strip()
-            Finfo = info.get("1.0", "end").strip()    
-            if commandsCountByName(Fname) == 0:
-                if Fname and Fcode and Finfo :
-                    addCommands(Fname,Fcode, par.get(), Finfo)
-                    self.reloadCom(Tcomand)
-                else:
-                    tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wadd)
-            else:
-                tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!")
-        else:
-            return
-        
 
 
     def reloadCom(self, Tcomand):
@@ -687,6 +725,7 @@ class panel(ctk.CTkFrame):
 
 
     def addInstrument(self):
+        mode = {"value": False}
         wIns = ctk.CTkToplevel(self)
         wIns.geometry("900x610+400+200")
         wIns.overrideredirect(True)
@@ -726,6 +765,8 @@ class panel(ctk.CTkFrame):
         btnInsEditor.place(x=30, y=470)
         btnInsDelete.place(x=460, y=470)
         btnInsClear.place(x=30, y=510)
+        tbInsName.configure(state="disabled", border_color="#cc1a0d")
+        tbInsAddr.configure(state="disabled", border_color="#cc1a0d")
 
         def loadTIns():
             tIns.delete(*tIns.get_children())
@@ -751,28 +792,52 @@ class panel(ctk.CTkFrame):
                 clearInsInput()
 
         def editIns():
-            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wIns)
-            if proceed:
-                Iname = tbInsName.get("1.0", "end").strip()
-                Iaddr = tbInsAddr.get("1.0", "end").strip()
-                if countInstrument(Iname) < 2:
-                    if Iname and Iaddr:
-                        selectedItem = tIns.selection()
-                        if not selectedItem:
-                            return
+            if mode["value"]:
+                proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wIns)
+                if proceed:
+                    mode["value"] = False
+                    Iname = tbInsName.get("1.0", "end").strip()
+                    Iaddr = tbInsAddr.get("1.0", "end").strip()
+                    if countInstrument(Iname) < 2:
+                        if Iname and Iaddr:
+                            selectedItem = tIns.selection()
+                            if not selectedItem:
+                                return
 
-                        vals = tIns.item(selectedItem[0], "values")
-                        name = vals[0]
-                        id = getInstrumentId(name)
-                        updateInstrument(Iname, Iaddr, id)
-                        loadTIns()
-                        clearInsInput()
+                            vals = tIns.item(selectedItem[0], "values")
+                            name = vals[0]
+                            id = getInstrumentId(name)
+                            updateInstrument(Iname, Iaddr, id)
+                            loadTIns()
+                            clearInsInput()
+                            btnInsEditor.configure(
+                                text="New",
+                                command=newInstrument
+                            )
+                            tbInsName.configure(state="disabled", border_color="#cc1a0d")
+                            tbInsAddr.configure(state="disabled", border_color="#cc1a0d")
+                        else:
+                            tk.messagebox.showwarning(title="warning", message="You must fill all of the information when editing a command", parent=wIns)
                     else:
-                        tk.messagebox.showwarning(title="warning", message="You must fill all of the information when editing a command", parent=wIns)
+                        tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!", parent=wIns)
                 else:
-                    tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!", parent=wIns)
+                    return
             else:
-                return
+                mode["value"] = True
+                btnInsEditor.configure(text="Save")
+                tbInsName.configure(state="normal", border_color="#1492c4")
+                tbInsAddr.configure(state="normal", border_color="#1492c4")
+                selectedItem = tIns.selection()
+                if not selectedItem:
+                    return
+                
+                vals = tIns.item(selectedItem[0], "values")
+
+                if vals:
+                    tbInsName.delete("1.0", "end")
+                    tbInsAddr.delete("1.0","end")
+                    tbInsName.insert("1.0", vals[0])
+                    tbInsAddr.insert("1.0", vals[1])
 
         def clearSelIns():
             btnInsDelete.configure(text="Delete All", command=lambda: deleteIns())
@@ -794,21 +859,34 @@ class panel(ctk.CTkFrame):
             tbInsAddr.insert("1.0", "")
 
         def newInstrument():
-            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wIns)
-            if proceed:
-                Iname = tbInsName.get("1.0", "end").strip()
-                Iaddr = tbInsAddr.get("1.0", "end").strip()
-                if countInstrument(Iname) == 0:
-                    if Iname and Iaddr:
-                        addInstument(Iname, Iaddr)
-                        loadTIns()
-                        clearInsInput()
+            if mode["value"]:
+                proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wIns)
+                if proceed:
+                    mode["value"] = False
+                    Iname = tbInsName.get("1.0", "end").strip()
+                    Iaddr = tbInsAddr.get("1.0", "end").strip()
+                    if countInstrument(Iname) == 0:
+                        if Iname and Iaddr:
+                            addInstument(Iname, Iaddr)
+                            loadTIns()
+                            clearInsInput()
+                            btnInsEditor.configure(
+                                text="New",
+                                command=newInstrument
+                            )
+                            tbInsName.configure(state="disabled", border_color="#cc1a0d")
+                            tbInsAddr.configure(state="disabled", border_color="#cc1a0d")
+                        else:
+                            tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wIns)
                     else:
-                        tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wIns)
+                        tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!", parent=wIns)
                 else:
-                    tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!", parent=wIns)
+                    return
             else:
-                return
+                mode["value"] = True
+                btnInsEditor.configure(text="Save")
+                tbInsName.configure(state="normal", border_color="#1492c4")
+                tbInsAddr.configure(state="normal", border_color="#1492c4")
 
         def tInsChange(event):
 
@@ -830,6 +908,8 @@ class panel(ctk.CTkFrame):
         tIns.bind("<<TreeviewSelect>>", tInsChange)
 
     def addCom(self):
+        EditMode = {"value": False}
+
         self.currentId = -1
         
         wadd = ctk.CTkToplevel(self)
@@ -861,7 +941,7 @@ class panel(ctk.CTkFrame):
             if not selectedItem:
                 return
 
-            btnNew.configure(text="Edit", command=lambda: editCommand())
+            btnNew.configure(text="Edit", command=lambda: editCommand(EditMode))
             btnDelete.configure(text="Delete Selected", command=lambda: deleteSelected())     
 
             codeValues = Tcomand.item(selectedItem[0], "values")
@@ -908,12 +988,17 @@ class panel(ctk.CTkFrame):
         
         ctk.CTkLabel(wadd, text="info: ", font=("Segoe UI", 16, "bold")).place(x=50, y=470)
         tbinfo = ctk.CTkTextbox(wadd, width=740, height=20, border_width=2, border_color="#1492c4")
-        tbinfo.place(x=100, y=470) 
+        tbinfo.place(x=100, y=470)
+
+        tbComName.configure(state="disabled",  border_color="#cc1a0d") 
+        tbCode.configure(state="disabled", border_color="#cc1a0d")
+        swPar.configure(state="disabled", border_color="#cc1a0d")
+        tbinfo.configure(state="disabled", border_color="#cc1a0d")
         
         btnDelete = ctk.CTkButton(wadd, text="Delete All", font=("Segoe UI", 16, "bold"), command=lambda: deleteAll(), width=370, text_color_disabled="white", fg_color="red", hover_color="#610000", text_color="white")
         btnDelete.place(x=65, y=520)
         
-        btnNew = ctk.CTkButton(wadd, text="New", font=("Segoe UI", 16, "bold"), command=lambda: self.newCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd), width=370, state="normal", text_color_disabled="white", fg_color="green", hover_color="#00610d", text_color="white")
+        btnNew = ctk.CTkButton(wadd, text="New", font=("Segoe UI", 16, "bold"), command=lambda: newCommand(EditMode), width=370, state="normal", text_color_disabled="white", fg_color="green", hover_color="#00610d", text_color="white")
         btnNew.place(x=465, y=520)
         
         ctk.CTkButton(wadd, text="clear selection", font=("Segoe UI", 16, "bold"), command=lambda: clearCom(), width=770).place(x=65, y=560)
@@ -921,7 +1006,7 @@ class panel(ctk.CTkFrame):
         def clearCom():
             Tcomand.selection_remove(Tcomand.selection())
             clearTb()
-            btnNew.configure(text="New", command=lambda: self.newCommand(tbComName, tbCode, swPar, tbinfo, Tcomand, wadd))
+            btnNew.configure(text="New", command=lambda: newCommand(EditMode))
             btnDelete.configure(text="Delete All", command=lambda: deleteAll())             
     
         def deleteAll():
@@ -931,28 +1016,99 @@ class panel(ctk.CTkFrame):
                 self.reloadCom(Tcomand)
                 clearCom()
 
-        def editCommand():
-            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceed?", parent=wadd)
-            if proceed:
-                Fname = tbComName.get("1.0", "end").strip()
-                Fcode = tbCode.get("1.0", "end").strip()
-                Finfo = tbinfo.get("1.0", "end").strip()    
-                
-                if Fname and Fcode and Finfo:
-                    codeValues = Tcomand.item(Tcomand.selection()[0], "values")
+        def editCommand(EditMode):
+            if EditMode["value"]:
+                proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceed?", parent=wadd)
+                if proceed:
+                    Fname = tbComName.get("1.0", "end").strip()
+                    Fcode = tbCode.get("1.0", "end").strip()
+                    Finfo = tbinfo.get("1.0", "end").strip()    
+                    EditMode["value"] = False
+                    if Fname and Fcode and Finfo:
+                        codeValues = Tcomand.item(Tcomand.selection()[0], "values")
 
-                    updateCommands(Fname, Fcode, swPar.get(), Finfo, self.currentId)
+                        updateCommands(Fname, Fcode, swPar.get(), Finfo, self.currentId)
 
-                    if commandsCountByName(Fname) > 1:
-                        updateCommands(codeValues[0], codeValues[1], codeValues[2], codeValues[3], self.currentId) 
-                        tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!", parent=wadd)
-                        return
+                        if commandsCountByName(Fname) > 1:
+                            updateCommands(codeValues[0], codeValues[1], codeValues[2], codeValues[3], self.currentId) 
+                            tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!", parent=wadd)
+                            return
+                        
+                        self.reloadCom(Tcomand)
+                        tk.messagebox.showinfo("Success", "Database updated successfully", parent=wadd)
+                        clearCom()
+                        btnNew.configure(text="New")
+
+                        tbComName.configure(state="disabled",  border_color="#cc1a0d") 
+                        tbCode.configure(state="disabled", border_color="#cc1a0d")
+                        swPar.configure(state="disabled", border_color="#cc1a0d")
+                        tbinfo.configure(state="disabled", border_color="#cc1a0d")
+                    else:
+                        tk.messagebox.showwarning(title="Warning", message="You must fill all of the information when creating a command", parent=wadd)
+            else:
+                EditMode["value"] = True
+                tbComName.configure(state="normal",  border_color="#1492c4") 
+                tbCode.configure(state="normal", border_color="#1492c4")
+                swPar.configure(state="normal", border_color="#1492c4")
+                tbinfo.configure(state="normal", border_color="#1492c4")
+                btnNew.configure(text="Save")
+                selectedItem = Tcomand.selection()
+                if not selectedItem:
+                    return
+
+                codeValues = Tcomand.item(selectedItem[0], "values")
+                if codeValues:
+                    self.currentId = getCommandsId(codeValues[0])
                     
-                    self.reloadCom(Tcomand)
-                    tk.messagebox.showinfo("Success", "Database updated successfully", parent=wadd)
-                    clearCom()           
+                    tbComName.delete("1.0", "end")
+                    tbComName.insert("1.0", codeValues[0])
+                    
+                    tbCode.delete("1.0", "end")
+                    tbCode.insert("1.0", codeValues[1])
+                    
+                    if int(codeValues[2]):
+                        swPar.select()
+                    else:
+                        swPar.deselect()
+                        
+                    tbinfo.delete("1.0", "end")
+                    tbinfo.insert("1.0", codeValues[3]) 
+
+
+         
+        def newCommand(mode):
+            if mode["value"]:
+                btnNew.configure(text="New")
+                proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede", parent=wadd)
+                if proceed:
+                    Fname = tbComName.get("1.0", "end").strip()
+                    Fcode = tbCode.get("1.0", "end").strip()
+                    Finfo = tbinfo.get("1.0", "end").strip()    
+                    mode["value"] = False
+                    if commandsCountByName(Fname) == 0:
+                        if Fname and Fcode and Finfo :
+                            addCommands(Fname,Fcode, swPar.get(), Finfo)
+                            self.reloadCom(Tcomand)
+                            clearTb()
+                            tbComName.configure(state="disabled",  border_color="#cc1a0d") 
+                            tbCode.configure(state="disabled", border_color="#cc1a0d")
+                            swPar.configure(state="disabled", border_color="#cc1a0d")
+                            tbinfo.configure(state="disabled", border_color="#cc1a0d")
+
+                        else:
+                            tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wadd)
+                    else:
+                        tk.messagebox.showerror(title="Error", message="Two Commands can't have same names!")
                 else:
-                    tk.messagebox.showwarning(title="Warning", message="You must fill all of the information when creating a command", parent=wadd)
+                    return
+            else:
+                mode["value"] = True
+                tbComName.configure(state="normal",  border_color="#1492c4") 
+                tbCode.configure(state="normal", border_color="#1492c4")
+                swPar.configure(state="normal", border_color="#1492c4")
+                tbinfo.configure(state="normal", border_color="#1492c4")       
+
+                btnNew.configure(text="Save")
 
         def clearTb():
             tbComName.delete("1.0", "end")
@@ -999,9 +1155,6 @@ class panel(ctk.CTkFrame):
             command=lambda: self.file_menu.show(btnFile)
         )
         btnFile.pack(side="left", padx=5, pady=5)
-
-        #body = ctk.CTkFrame(self, fg_color="transparent")
-        #body.pack(fill="both", expand=True, padx=20, pady=5)
 
         content = ctk.CTkFrame(self, fg_color="transparent")
         content.pack(fill="both", expand=True, padx=20, pady=20)
