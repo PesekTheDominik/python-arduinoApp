@@ -254,7 +254,7 @@ class panel(ctk.CTkFrame):
             if profilMode["value"]:
                 proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede? \nBy editing you will delete testCmd result")
                 if proceed:
-                    profilMode["values"] = False
+                    profilMode["value"] = False
                     id = getProfilId(cbProfil.get())
                     Pname = tbName.get("1.0", "end").strip()
                     Pport = cbPorts.get()
@@ -266,34 +266,42 @@ class panel(ctk.CTkFrame):
                         if countProfilByName(Pname) < 2:
                             updateProfil(Pname, Pport, Pbaud, Ptimeout,Pcommand, id)
                             cbProfil.configure(values=getProfilName())
+                            tbName.configure(state="disabled", border_color="#cc1a0d")
+                            cbPorts.configure(state="disabled", border_color="#cc1a0d")
+
+                            cbBaudRate.configure(state="disabled", border_color="#cc1a0d")
+                            tbTimeout.configure(state="disabled", border_color="#cc1a0d")
+                            cbCommands.configure(state="disabled", border_color="#cc1a0d")
+                            cbProfil.configure(state="normal", border_color=("gray70", "gray30"))
                             if int(config.get("program", "clearprofilselection")) == 1:
                                 clearInputs()
+                                btnEditor.configure(text="New")
+                            else:
+                                btnEditor.configure(text="Edit")
+                            loadProfilesTable()
                         else:
                             tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
                     else:
                         tk.messagebox.showwarning(title="Warning", message="All inputs must be filled in to create a profile")
             else:
-                profilMode["values"] = True 
+                profilMode["value"] = True 
                 tbName.configure(state="normal", border_color="#1492c4")
-                cbPorts.configure(state="normal", border_color="#1492c4")
-                cbBaudRate.configure(state="normal", border_color="#1492c4")
+                cbPorts.configure(state="normal", border_color=("gray70", "gray30"))
+                cbBaudRate.configure(state="normal", border_color=("gray70", "gray30"))
                 tbTimeout.configure(state="normal", border_color="#1492c4")
-                cbCommands.configure(state="normal", border_color="#1492c4")
-                selectedItem = tProfil.selection()
-                if not selectedItem:
-                    return
-                
-                vals = tProfil.item(selectedItem[0], "values")
+                cbCommands.configure(state="normal", border_color=("gray70", "gray30"))
+                profil = getProfilByName(cbProfil.get())
 
-                if vals:
+                btnEditor.configure(text="Save")
+                
+                if profil:
                     tbName.delete("1.0", "end")
-                    tbName.insert("1.0", vals[1])
-                    cbPorts.set(vals[2])
-                    cbBaudRate.set(vals[3])
+                    tbName.insert("1.0", profil[1])
+                    cbPorts.set(profil[2])
+                    cbBaudRate.set(profil[3])
                     tbTimeout.delete("1.0", "end")
-                    tbTimeout.insert("1.0", vals[4])
-                    cbCommands.delete("1.0", "end")
-                    cbCommands.insert("1.0", vals[5])
+                    tbTimeout.insert("1.0", profil[4])
+                    cbCommands.set(profil[5])
 
         def delProfil():
             proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede? \nBy editing you will delete testCmd result")
@@ -318,6 +326,14 @@ class panel(ctk.CTkFrame):
                             addProfil(Pname, Pport, Pbaud, Ptimeout, Pcommand)
                             profilNames = getProfilName()
                             cbProfil.configure(values=profilNames)
+                            tbName.configure(state="disabled", border_color="#cc1a0d")
+                            cbPorts.configure(state="disabled", border_color="#cc1a0d")
+                            cbBaudRate.configure(state="disabled", border_color="#cc1a0d")
+                            tbTimeout.configure(state="disabled", border_color="#cc1a0d")
+                            cbCommands.configure(state="disabled", border_color="#cc1a0d")
+                            cbProfil.configure(state="normal", border_color=("gray70", "gray30"))
+                            btnEditor.configure(text="New")
+                            loadProfilesTable()
                             clearInputs()
                             if profilLen == 0:
                                 profilLen
@@ -329,11 +345,13 @@ class panel(ctk.CTkFrame):
                         tk.messagebox.showwarning(title="Warning", message="All inputs must be filled in to create a profile")
             else:
                 profilMode["value"] = True
+                btnEditor.configure(text="Save")
                 tbName.configure(state="normal", border_color="#1492c4")
-                cbPorts.configure(state="normal", border_color="#1492c4")
-                cbBaudRate.configure(state="normal", border_color="#1492c4")
+                cbPorts.configure(state="normal", border_color=("gray70", "gray30"))
+                cbBaudRate.configure(state="normal", border_color=("gray70", "gray30"))
                 tbTimeout.configure(state="normal", border_color="#1492c4")
-                cbCommands.configure(state="normal", border_color="#1492c4")
+                cbCommands.configure(state="normal", border_color=("gray70", "gray30"))
+                cbProfil.configure(state="disabled", border_color="#cc1a0d")
 
         def clearProf():
             tProfil.selection_remove(tProfil.selection())
@@ -767,6 +785,20 @@ class panel(ctk.CTkFrame):
         btnInsClear.place(x=30, y=510)
         tbInsName.configure(state="disabled", border_color="#cc1a0d")
         tbInsAddr.configure(state="disabled", border_color="#cc1a0d")
+        btnInsCancel = ctk.CTkButton(wIns,width=830,  height=30, command=lambda: cancelIns(),font=("Segoe UI", 16, "bold"), text="Cancel")
+
+        def cancelIns():
+            clearInsInput()
+            tbInsName.configure(state="disabled", border_color="#cc1a0d")
+            tbInsAddr.configure(state="disabled", border_color="#cc1a0d")
+            btnInsCancel.place_forget()
+            mode["value"] = False
+            btnInsEditor.configure(
+                text="New",
+                command=newInstrument
+            )
+            tIns.selection_remove(tIns.selection())
+
 
         def loadTIns():
             tIns.delete(*tIns.get_children())
@@ -816,6 +848,7 @@ class panel(ctk.CTkFrame):
                             )
                             tbInsName.configure(state="disabled", border_color="#cc1a0d")
                             tbInsAddr.configure(state="disabled", border_color="#cc1a0d")
+                            btnInsCancel.place_forget()
                         else:
                             tk.messagebox.showwarning(title="warning", message="You must fill all of the information when editing a command", parent=wIns)
                     else:
@@ -830,6 +863,8 @@ class panel(ctk.CTkFrame):
                 selectedItem = tIns.selection()
                 if not selectedItem:
                     return
+                
+                btnInsCancel.place(x=30, y=550)
                 
                 vals = tIns.item(selectedItem[0], "values")
 
@@ -876,6 +911,7 @@ class panel(ctk.CTkFrame):
                             )
                             tbInsName.configure(state="disabled", border_color="#cc1a0d")
                             tbInsAddr.configure(state="disabled", border_color="#cc1a0d")
+                            btnInsCancel.place_forget()
                         else:
                             tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wIns)
                     else:
@@ -883,6 +919,7 @@ class panel(ctk.CTkFrame):
                 else:
                     return
             else:
+                btnInsCancel.place(x=30, y=550)
                 mode["value"] = True
                 btnInsEditor.configure(text="Save")
                 tbInsName.configure(state="normal", border_color="#1492c4")
@@ -1001,7 +1038,22 @@ class panel(ctk.CTkFrame):
         btnNew = ctk.CTkButton(wadd, text="New", font=("Segoe UI", 16, "bold"), command=lambda: newCommand(EditMode), width=370, state="normal", text_color_disabled="white", fg_color="green", hover_color="#00610d", text_color="white")
         btnNew.place(x=465, y=520)
         
-        ctk.CTkButton(wadd, text="clear selection", font=("Segoe UI", 16, "bold"), command=lambda: clearCom(), width=770).place(x=65, y=560)
+        btnClearCom = ctk.CTkButton(wadd, text="clear selection", font=("Segoe UI", 16, "bold"), command=lambda: clearCom(), width=770)
+        btnClearCom.place(x=65, y=560)
+
+        btnComCancel = ctk.CTkButton(wadd, text="Cancel", font=("Segoe UI", 16, "bold"), command=lambda: ComCancel(), width=370)
+
+        def ComCancel():
+            EditMode["value"] = False
+            btnNew.configure(text="New")
+            clearCom()
+
+            tbComName.configure(state="disabled",  border_color="#cc1a0d") 
+            tbCode.configure(state="disabled", border_color="#cc1a0d")
+            swPar.configure(state="disabled", border_color="#cc1a0d")
+            tbinfo.configure(state="disabled", border_color="#cc1a0d")
+            btnComCancel.place_forget()
+            btnClearCom.configure(width=770)
 
         def clearCom():
             Tcomand.selection_remove(Tcomand.selection())
@@ -1043,6 +1095,8 @@ class panel(ctk.CTkFrame):
                         tbCode.configure(state="disabled", border_color="#cc1a0d")
                         swPar.configure(state="disabled", border_color="#cc1a0d")
                         tbinfo.configure(state="disabled", border_color="#cc1a0d")
+                        btnComCancel.place_forget()
+                        btnClearCom.configure(width=770)
                     else:
                         tk.messagebox.showwarning(title="Warning", message="You must fill all of the information when creating a command", parent=wadd)
             else:
@@ -1052,6 +1106,8 @@ class panel(ctk.CTkFrame):
                 swPar.configure(state="normal", border_color="#1492c4")
                 tbinfo.configure(state="normal", border_color="#1492c4")
                 btnNew.configure(text="Save")
+                btnClearCom.configure(width=370)
+                btnComCancel.place(x=465, y=560)
                 selectedItem = Tcomand.selection()
                 if not selectedItem:
                     return
@@ -1094,7 +1150,8 @@ class panel(ctk.CTkFrame):
                             tbCode.configure(state="disabled", border_color="#cc1a0d")
                             swPar.configure(state="disabled", border_color="#cc1a0d")
                             tbinfo.configure(state="disabled", border_color="#cc1a0d")
-
+                            btnClearCom.configure(width=770)
+                            btnComCancel.place_forget()
                         else:
                             tk.messagebox.showwarning(title="warning", message="You must fill all of the information when creating a command", parent=wadd)
                     else:
@@ -1107,7 +1164,8 @@ class panel(ctk.CTkFrame):
                 tbCode.configure(state="normal", border_color="#1492c4")
                 swPar.configure(state="normal", border_color="#1492c4")
                 tbinfo.configure(state="normal", border_color="#1492c4")       
-
+                btnClearCom.configure(width=370)
+                btnComCancel.place(x=465, y=560)
                 btnNew.configure(text="Save")
 
         def clearTb():
