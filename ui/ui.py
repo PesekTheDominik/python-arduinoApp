@@ -155,6 +155,7 @@ class panel(ctk.CTkFrame):
 
         btnEditor = ctk.CTkButton(self.tabview.tab(texts[0]),width=160,  height=30, command=lambda: newProfil(),font=("Segoe UI", 16, "bold"), text="New")
         btnClear = ctk.CTkButton(self.tabview.tab(texts[0]), height=30,width=160, command=lambda: clearProf(),font=("Segoe UI", 16, "bold"), text="Clear Selection")
+        btnCancel = ctk.CTkButton(self.tabview.tab(texts[0]), height=30,width=160, command=lambda: cancelProf(),font=("Segoe UI", 16, "bold"), text="Cancel")
         conn = True
         btnConnect = ctk.CTkButton(self.tabview.tab(texts[0]), width=650, height=40, text="Connect",font=("Segoe UI", 16, "bold"), command=lambda: arduinoConnect(conn))
 
@@ -172,6 +173,20 @@ class panel(ctk.CTkFrame):
         cbCommands.configure(state="disabled", border_color="#cc1a0d")
 
         btnEditor.place(x=730, y=80)
+
+        def cancelProf():
+            clearInputs()
+            profilMode["value"] = False
+            cbProfil.configure(values=getProfilName())
+            tbName.configure(state="disabled", border_color="#cc1a0d")
+            cbPorts.configure(state="disabled", border_color="#cc1a0d")
+
+            cbBaudRate.configure(state="disabled", border_color="#cc1a0d")
+            tbTimeout.configure(state="disabled", border_color="#cc1a0d")
+            cbCommands.configure(state="disabled", border_color="#cc1a0d")
+            cbProfil.configure(state="normal", border_color=("gray70", "gray30"))
+            btnEditor.configure(text="New")
+
 
         def sendAddi():
             print()
@@ -255,6 +270,8 @@ class panel(ctk.CTkFrame):
                 proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede? \nBy editing you will delete testCmd result")
                 if proceed:
                     profilMode["value"] = False
+                    btnClear.place(x=1130, y=80)
+                    btnCancel.place_forget()
                     id = getProfilId(cbProfil.get())
                     Pname = tbName.get("1.0", "end").strip()
                     Pport = cbPorts.get()
@@ -291,6 +308,8 @@ class panel(ctk.CTkFrame):
                 tbTimeout.configure(state="normal", border_color="#1492c4")
                 cbCommands.configure(state="normal", border_color=("gray70", "gray30"))
                 profil = getProfilByName(cbProfil.get())
+                btnClear.place_forget()
+                btnCancel.place(x=1130, y=80) 
 
                 btnEditor.configure(text="Save")
                 
@@ -333,6 +352,8 @@ class panel(ctk.CTkFrame):
                             cbCommands.configure(state="disabled", border_color="#cc1a0d")
                             cbProfil.configure(state="normal", border_color=("gray70", "gray30"))
                             btnEditor.configure(text="New")
+                            btnCancel.place_forget()
+                            btnClear.place(x=1130, y=80) 
                             loadProfilesTable()
                             clearInputs()
                             if profilLen == 0:
@@ -352,6 +373,8 @@ class panel(ctk.CTkFrame):
                 tbTimeout.configure(state="normal", border_color="#1492c4")
                 cbCommands.configure(state="normal", border_color=("gray70", "gray30"))
                 cbProfil.configure(state="disabled", border_color="#cc1a0d")
+                btnClear.place_forget()
+                btnCancel.place(x=1130, y=80) 
 
         def clearProf():
             tProfil.selection_remove(tProfil.selection())
@@ -434,6 +457,7 @@ class panel(ctk.CTkFrame):
         tProfil.bind("<<TreeviewSelect>>", tProfilChange)
 
         #--------------------------tab 2------------------------------------------------#
+        methodMode = {"value": False}
         fMethod = ctk.CTkFrame(
             self.tabview.tab(texts[1]),
             width=2000,
@@ -492,6 +516,15 @@ class panel(ctk.CTkFrame):
         btnMetDelete.place(x=680, y=80)
         btnMetClear =  ctk.CTkButton(self.tabview.tab(texts[1]),width=1212,  height=30, command=lambda: clearMetSelect(),font=("Segoe UI", 16, "bold"), text="Clear Select")
         btnMetClear.place(x=59, y=130)
+        btnMetCancel = ctk.CTkButton(self.tabview.tab(texts[1]),width=1212,  height=30, command=lambda: cancelMet(),font=("Segoe UI", 16, "bold"), text="Cancel")
+
+
+        tbMetName.configure(state="disabled", border_color="#cc1a0d")
+        tbMetInfo.configure(state="disabled", border_color="#cc1a0d")
+        swDeleted.configure(state="disabled")
+
+        def cancelMet():
+            print()
 
         def loadMethodTable():
             tMethod.delete(*tMethod.get_children())
@@ -562,42 +595,68 @@ class panel(ctk.CTkFrame):
             swDeleted.deselect()
 
         def editMethod():
-            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
-            if proceed:
-                Mname = tbMetName.get("1.0", "end").strip()
-                Minfo = tbMetInfo.get("1.0", "end").strip()
-                if Mname and Minfo:
-                    if countMethodByName(Mname) < 2:
-                        id = getMethodId(cbMethod.get())
-                        updateMethod(Mname, Minfo, swDeleted.get(), id)
-                        if int(config.get("program", "clearprofilselection")) == 1:
-                            clearMetInputs()
+            if methodMode["value"]:
+                proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
+                if proceed:
+                    methodMode["value"] = False
+                    Mname = tbMetName.get("1.0", "end").strip()
+                    Minfo = tbMetInfo.get("1.0", "end").strip()
+                    if Mname and Minfo:
+                        if countMethodByName(Mname) < 2:
+                            id = getMethodId(cbMethod.get())
+                            updateMethod(Mname, Minfo, swDeleted.get(), id)
+                            tbMetName.configure(state="disabled", border_color="#cc1a0d")
+                            tbMetInfo.configure(state="disabled", border_color="#cc1a0d")
+                            swDeleted.configure(state="disabled")
+                            btnEditor.configure(text="Edit")
+                            if int(config.get("program", "clearprofilselection")) == 1:
+                                clearMetInputs()
 
-                        loadMethodTable()
+                            loadMethodTable()
+                        else:
+                            tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
                     else:
-                        tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
-                else:
-                    tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
+                        tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
+            else:
+                methodMode["value"] = True
+                tbMetName.configure(state="normal", border_color="#1492c4")
+                tbMetInfo.configure(state="normal", border_color="#1492c4")
+                swDeleted.configure(state="normal")
+                btnEditor.configure(text="Save")
+                btnMetCancel.place(x=59, y=130)
+                btnMetClear.place_forget()
+                #tohle dodelej u new a pokracuj na cancel
 
         def newMethod():
-            proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
-            if proceed:
-                Mname = tbMetName.get("1.0", "end").strip()
-                Minfo = tbMetInfo.get("1.0", "end").strip()
-                if Mname and Minfo:
-                    if countMethodByName(Mname) < 1:
-                        addMethod(Mname, Minfo, swDeleted.get())
-                        methodNames = getMethodNames()
-                        cbMethod.configure(values=methodNames)
-                        loadMethodTable()
-                        clearMetInputs()
+            if methodMode["value"]:
+                proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
+                if proceed:
+                    methodMode["value"] = False
+                    Mname = tbMetName.get("1.0", "end").strip()
+                    Minfo = tbMetInfo.get("1.0", "end").strip()
+                    if Mname and Minfo:
+                        if countMethodByName(Mname) < 1:
+                            addMethod(Mname, Minfo, swDeleted.get())
+                            methodNames = getMethodNames()
+                            cbMethod.configure(values=methodNames)
+                            tbMetName.configure(state="disabled", border_color="#cc1a0d")
+                            tbMetInfo.configure(state="disabled", border_color="#cc1a0d")
+                            swDeleted.configure(state="disabled")
+                            btnEditor.configure(text="New")
+                            loadMethodTable()
+                            clearMetInputs()
+                        else:
+                            tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
                     else:
-                        tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
-                else:
-                    tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
+                        tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
+            else:
+                methodMode["value"] = True
+                tbMetName.configure(state="normal", border_color="#1492c4")
+                tbMetInfo.configure(state="normal", border_color="#1492c4")
+                swDeleted.configure(state="normal")
+                btnEditor.configure(text="Save")
 
-    
-        #--------------------------tab 2------------------------------------------------#
+        #--------------------------tab 3----------------------------------------------#
         fcmd = ctk.CTkFrame(
             self.tabview.tab(texts[2]),
             width=1500,
