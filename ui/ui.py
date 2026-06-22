@@ -329,6 +329,7 @@ class panel(ctk.CTkFrame):
                     deleteProfil(cbProfil.get())
                     clearInputs()
                     cbProfil.configure(values=getProfilName())
+                    loadProfilesTable()
 
         def newProfil():
             if profilMode["value"]:
@@ -524,7 +525,16 @@ class panel(ctk.CTkFrame):
         swDeleted.configure(state="disabled")
 
         def cancelMet():
-            print()
+            methodMode["value"] = False
+            cbMethod.configure(values=methodNames)
+            tbMetName.configure(state="disabled", border_color="#cc1a0d")
+            tbMetInfo.configure(state="disabled", border_color="#cc1a0d")
+            swDeleted.configure(state="disabled")
+            btnEditor.configure(text="New")
+            btnMetClear.place(x=59, y=130)
+            btnMetCancel.place_forget()
+            clearMetInputs()
+
 
         def loadMethodTable():
             tMethod.delete(*tMethod.get_children())
@@ -551,7 +561,7 @@ class panel(ctk.CTkFrame):
         def metDelete(): 
             proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
             if proceed:
-                deteleMethod(tbMetName.get("1.0", "end").strip())
+                deteleMethod(cbMethod.get())
                 loadMethodTable()
                 clearMetInputs()
 
@@ -609,9 +619,12 @@ class panel(ctk.CTkFrame):
                             tbMetInfo.configure(state="disabled", border_color="#cc1a0d")
                             swDeleted.configure(state="disabled")
                             btnEditor.configure(text="Edit")
+                            btnMetClear.place(x=59, y=130)
+                            btnMetCancel.place_forget()
                             if int(config.get("program", "clearprofilselection")) == 1:
                                 clearMetInputs()
-
+                                btnEditor.configure(text="New", command=lambda: newMethod())
+                            
                             loadMethodTable()
                         else:
                             tk.messagebox.showwarning(title="Warning", message="Names have to be unique")
@@ -619,13 +632,13 @@ class panel(ctk.CTkFrame):
                         tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a profile")
             else:
                 methodMode["value"] = True
+                btnEditor.configure(text="Save")
                 tbMetName.configure(state="normal", border_color="#1492c4")
                 tbMetInfo.configure(state="normal", border_color="#1492c4")
                 swDeleted.configure(state="normal")
                 btnEditor.configure(text="Save")
                 btnMetCancel.place(x=59, y=130)
                 btnMetClear.place_forget()
-                #tohle dodelej u new a pokracuj na cancel
 
         def newMethod():
             if methodMode["value"]:
@@ -643,6 +656,8 @@ class panel(ctk.CTkFrame):
                             tbMetInfo.configure(state="disabled", border_color="#cc1a0d")
                             swDeleted.configure(state="disabled")
                             btnEditor.configure(text="New")
+                            btnMetClear.place(x=59, y=130)
+                            btnMetCancel.place_forget() 
                             loadMethodTable()
                             clearMetInputs()
                         else:
@@ -655,6 +670,8 @@ class panel(ctk.CTkFrame):
                 tbMetInfo.configure(state="normal", border_color="#1492c4")
                 swDeleted.configure(state="normal")
                 btnEditor.configure(text="Save")
+                btnMetCancel.place(x=59, y=130)
+                btnMetClear.place_forget()
 
         #--------------------------tab 3----------------------------------------------#
         fcmd = ctk.CTkFrame(
@@ -665,29 +682,25 @@ class panel(ctk.CTkFrame):
 
         fcmd.place(x=30, y=240)
 
-        columns = ("id", "method", "info", "time", "instrument", "command", "parameter", "code", "timeout")
+        columns = ("time", "state", "description", "instrument", "command", "parameter", "code")
 
         tcmd = ttk.Treeview(fcmd, columns=columns, show="headings", height=23)
 
-        tcmd.heading("id", text="ID")
-        tcmd.heading("method", text="method")
-        tcmd.heading("info", text="info")
         tcmd.heading("time", text="time")
+        tcmd.heading("state", text="state")
+        tcmd.heading("description", text="description")
         tcmd.heading("instrument", text="instrument")
         tcmd.heading("command", text="command")
         tcmd.heading("parameter", text="parameter")
         tcmd.heading("code", text="code")
-        tcmd.heading("timeout", text="timeout")
 
-        tcmd.column("id", width=100, anchor="center")
-        tcmd.column("method", width=150)
-        tcmd.column("info", width=200)
-        tcmd.column("time", width=100)
+        tcmd.column("time", width=150)
+        tcmd.column("state", width=200)
+        tcmd.column("description", width=100)
         tcmd.column("instrument", width=150)
         tcmd.column("command", width=150)
         tcmd.column("parameter", width=150)
         tcmd.column("code", width=150)
-        tcmd.column("timeout", width=100)
 
         tcmd.pack(side="left", fill="both", expand=True)
 
@@ -714,8 +727,11 @@ class panel(ctk.CTkFrame):
         commands = [c[:-1] for c in getCommandsName()]
         cbCmdCommands = ctk.CTkComboBox(self.tabview.tab(texts[2]), width=150, height=30, values=commands , state="readonly", command=lambda choice: loadCmdCommands(choice))
         tbCmdParameter = ctk.CTkTextbox(self.tabview.tab(texts[2]), width=100, height=30,border_width=2, border_color="#1492c4")
-
         cbCmdCommands.place(x=150, y=80)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="state:", font=("Segoe UI", 16, "bold")).place(x=440, y=80)
+        states = ["Run", "Pause", "Skip"]
+        cbCmdStates = ctk.CTkComboBox(self.tabview.tab(texts[2]), width=150, height=30, values=states , state="readonly")
+        cbCmdStates.place(x=500, y=80)
 
         def loadCmdCommands(choice):
             par = getCommandsPar(choice)
@@ -728,21 +744,21 @@ class panel(ctk.CTkFrame):
             print()
 
         def loadCmdTable():
-            tcmd.delete(*tcmd.get_children())
+            if cbCmdMet.get():
+                tcmd.delete(*tcmd.get_children())
 
-            rows = getCmd() 
+                rows = getCmdByMethod(cbCmdMet.get()) 
 
-            for row in rows:
-                id = row[0]
-                method = row[1]
-                info = row[2]
-                time = row[3]
-                instrument = row[4]
-                command = row[5]
-                parameter = row[6]
-                code = row[7]
-                timeout = row[8]
-                tMethod.insert("","end", values=(id, method, info, time, instrument, command, parameter,code, timeout))
+                for row in rows:
+                    description = row[2]
+                    time = row[3]
+                    instrument = row[4]
+                    command = row[5]
+                    parameter = row[6]
+                    code = row[7]
+                    state = row[8]
+                    tMethod.insert("","end", values=(time,state,description, instrument, command, parameter,code))
+
         loadCmdTable()
 
 
@@ -1009,7 +1025,7 @@ class panel(ctk.CTkFrame):
         self.currentId = -1
         
         wadd = ctk.CTkToplevel(self)
-        wadd.geometry("900x610+400+200")
+        wadd.geometry("900x710+400+200")
         wadd.overrideredirect(True)
         wadd.configure(fg_color=("#f0f0f0","#1c1c1c"), corner_radius=50)   
         outer = ctk.CTkFrame(wadd, fg_color=("#1c1c1c", "#f0f0f0"), corner_radius=3)

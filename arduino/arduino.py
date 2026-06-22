@@ -40,4 +40,10 @@ class arduino:
             return False
 
         except Exception as e:
-            return f"Error: {e}"     
+            return f"Error: {e}"  
+
+    def checkCon(self):
+        if self.ser and self.ser.is_open:
+            return True
+        else:
+            return False

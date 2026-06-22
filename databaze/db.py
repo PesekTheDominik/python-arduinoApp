@@ -432,6 +432,14 @@ def getCmd():
     conn.close()
     return rows
 
+def getCmdByMethod(method):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM cmdLines WHERE method = ?", (method,))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
 def addLog(method ,executed ,info ,time,instrument,command ,parameter ,code ,response):
     conn = connect()
     cursor = conn.cursor()
