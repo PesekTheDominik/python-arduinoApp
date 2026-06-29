@@ -457,6 +457,17 @@ def getCmdByMethod(method):
     conn.close()
     return rows
 
+def addCmd(method, info, time, instrument, command, parameter, code, state):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO cmdLines (method, info, time, instrument, command, parameter, code, timeout)
+        VALUES (?,?,?,?,?,?,?,?)
+    """, (method, info, time, instrument, command, parameter, code, state))
+
+    conn.commit()
+    conn.close()
+
 def addLog(method ,executed ,info ,time,instrument,command ,parameter ,code ,response):
     conn = connect()
     cursor = conn.cursor()
