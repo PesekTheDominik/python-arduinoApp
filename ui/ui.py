@@ -25,6 +25,7 @@ connection = arduino()
 
 currentMode = False
 
+SelectedProfil = None
 
 def setMode():
     global currentMode
@@ -92,7 +93,7 @@ class StableDropdown(tk.Menu):
 
 
 class panel(ctk.CTkFrame):
-    global texts
+    global texts, SelectedProfil
     def __init__(self, master=None):
         super().__init__(master, fg_color="transparent")
         self.master = master
@@ -147,8 +148,7 @@ class panel(ctk.CTkFrame):
         tbTimeout.place(x=120, y=80)
         ctk.CTkLabel(self.tabview.tab(texts[0]), text="Test command: ", font=("Segoe UI", 16, "bold")).place(x=280, y=80)
 
-        commands = [c[:-1] for c in getCommandsName()]
-        cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=150, height=30, values=commands , state="readonly", command=lambda choice: loadCommands(choice))
+        cbCommands = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=150, height=30 , state="readonly", command=lambda choice: loadCommands(choice))
         tbParameter = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=100, height=30,border_width=2, border_color="#1492c4")
 
         cbCommands.place(x=430, y=80)
@@ -160,7 +160,7 @@ class panel(ctk.CTkFrame):
         btnConnect = ctk.CTkButton(self.tabview.tab(texts[0]), width=650, height=40, text="Connect",font=("Segoe UI", 16, "bold"), command=lambda: arduinoConnect(conn))
 
         addiLbl = ctk.CTkLabel(self.tabview.tab(texts[0]), text="try addition command:",font=("Segoe UI", 16, "bold"))
-        cbAddi = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=150, height=30, values=commands , state="readonly", command=lambda choice: loadAddi(choice))
+        cbAddi = ctk.CTkComboBox(self.tabview.tab(texts[0]), width=150, height=30, state="readonly", command=lambda choice: loadAddi(choice))
         tbAddi = ctk.CTkTextbox(self.tabview.tab(texts[0]), width=100, height=30,border_width=2, border_color="#1492c4" )
         btnAddi = ctk.CTkButton(self.tabview.tab(texts[0]), height=30,width=160, command=lambda: sendAddi(),font=("Segoe UI", 16, "bold"), text="Test")
         lblAns = ctk.CTkLabel(self.tabview.tab(texts[0]), text="Answer: ",font=("Segoe UI", 16, "bold"))    
@@ -243,6 +243,7 @@ class panel(ctk.CTkFrame):
     
         def loadProfil(choice):
             profil = getProfilByName(choice)
+            SelectedProfil = profil[1]
             tbName.delete("1.0", "end")
             tbName.insert("1.0", profil[1])
             cbPorts.set(profil[2])
@@ -308,6 +309,11 @@ class panel(ctk.CTkFrame):
                 tbTimeout.configure(state="normal", border_color="#1492c4")
                 cbCommands.configure(state="normal", border_color=("gray70", "gray30"))
                 profil = getProfilByName(cbProfil.get())
+                commands = [c[:-1] for c in getCommandsNameByProfil(profil[1])]
+                cbCommands.set("")
+                cbAddi.set("")
+                cbCommands.configure(values=commands)
+                cbAddi.configure(values=commands)
                 btnClear.place_forget()
                 btnCancel.place(x=1130, y=80) 
 
@@ -374,6 +380,8 @@ class panel(ctk.CTkFrame):
                 tbTimeout.configure(state="normal", border_color="#1492c4")
                 cbCommands.configure(state="normal", border_color=("gray70", "gray30"))
                 cbProfil.configure(state="disabled", border_color="#cc1a0d")
+                cbCommands.set("")
+                cbAddi.set("")
                 btnClear.place_forget()
                 btnCancel.place(x=1130, y=80) 
 
@@ -384,6 +392,7 @@ class panel(ctk.CTkFrame):
             btnDelete.configure(text="Delete all", command=lambda: delAllProfils())
             btnConnect.place_forget()
             btnClear.place_forget()
+            SelectedProfil = None
 
         def clearInputs():
             cbCommands.set("")
@@ -674,6 +683,7 @@ class panel(ctk.CTkFrame):
                 btnMetClear.place_forget()
 
         #--------------------------tab 3----------------------------------------------#
+        lineMode = {"value":False}
         fcmd = ctk.CTkFrame(
             self.tabview.tab(texts[2]),
             width=1500,
@@ -681,6 +691,7 @@ class panel(ctk.CTkFrame):
         )
 
         fcmd.place(x=30, y=240)
+
 
         columns = ("time", "state", "description", "instrument", "command", "parameter", "code")
 
@@ -713,35 +724,52 @@ class panel(ctk.CTkFrame):
         cmdMethodNames = getMethodNames()
         cbCmdMet = ctk.CTkComboBox(self.tabview.tab(texts[2]), values=cmdMethodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: cmdLoadMethod(choice),width=160, height=30)
         cbCmdMet.place(x=160,y=20) 
-        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Info:", font=("Segoe UI", 16, "bold")).place(x=340, y=20)
-        tbCmdInfo = ctk.CTkTextbox(self.tabview.tab(texts[2]), width=270, height=30,border_width=2, border_color="#1492c4")
-        tbCmdInfo.place(x=400, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Time from start:", font=("Segoe UI", 16, "bold")).place(x=690, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="Time from start:", font=("Segoe UI", 16, "bold")).place(x=340, y=20)
         tbCmdTime =  ctk.CTkTextbox(self.tabview.tab(texts[2]), width=150, height=30,border_width=2, border_color="#1492c4")
-        tbCmdTime.place(x=835, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[2]), text="instrument:", font=("Segoe UI", 16, "bold")).place(x=1010, y=20)
+        tbCmdTime.place(x=470, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="state:", font=("Segoe UI", 16, "bold")).place(x=640, y=20)
+        states = ["Run", "Pause", "Skip"]
+        cbCmdStates = ctk.CTkComboBox(self.tabview.tab(texts[2]), width=150, height=30, values=states , state="readonly")
+        cbCmdStates.place(x=690, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="description:", font=("Segoe UI", 16, "bold")).place(x=850, y=20)
+        tbCmdInfo = ctk.CTkTextbox(self.tabview.tab(texts[2]), width=340, height=30,border_width=2, border_color="#1492c4")
+        tbCmdInfo.place(x=950, y=20)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="instrument:", font=("Segoe UI", 16, "bold")).place(x=30, y=80)
         cmdInsNames = getInstrumentNames()
         cbCmdIns = ctk.CTkComboBox(self.tabview.tab(texts[2]), values=cmdInsNames, state="readonly",font=("Segoe UI", 16, "bold"),width=160, height=30)
-        cbCmdIns.place(x=1120, y=20)
-        ctk.CTkLabel(self.tabview.tab(texts[2]), text="commands:", font=("Segoe UI", 16, "bold")).place(x=30, y=80)
+        cbCmdIns.place(x=150, y=80)
+        ctk.CTkLabel(self.tabview.tab(texts[2]), text="command:", font=("Segoe UI", 16, "bold")).place(x=350, y=80)
         commands = [c[:-1] for c in getCommandsName()]
         cbCmdCommands = ctk.CTkComboBox(self.tabview.tab(texts[2]), width=150, height=30, values=commands , state="readonly", command=lambda choice: loadCmdCommands(choice))
         tbCmdParameter = ctk.CTkTextbox(self.tabview.tab(texts[2]), width=100, height=30,border_width=2, border_color="#1492c4")
-        cbCmdCommands.place(x=150, y=80)
-        ctk.CTkLabel(self.tabview.tab(texts[2]), text="state:", font=("Segoe UI", 16, "bold")).place(x=440, y=80)
-        states = ["Run", "Pause", "Skip"]
-        cbCmdStates = ctk.CTkComboBox(self.tabview.tab(texts[2]), width=150, height=30, values=states , state="readonly")
-        cbCmdStates.place(x=500, y=80)
+        cbCmdCommands.place(x=450, y=80)
+
+        btnCmdEditor = ctk.CTkButton(self.tabview.tab(texts[2]), height=30,width=160, command=lambda: addLine(),font=("Segoe UI", 16, "bold"), text="Add")
+        btnCmdEditor.place(x=630, y=80)
+        btnCmdDelete = ctk.CTkButton(self.tabview.tab(texts[2]), height=30,width=160, command=lambda: delAll(),font=("Segoe UI", 16, "bold"), text="Delete All")
+
+        def addLine():
+            print()
+
+        def editLine():
+            print()
+
+        def delAll():
+            print()
+
+        def delSelected():
+            print()
 
         def loadCmdCommands(choice):
             par = getCommandsPar(choice)
             if par == 1:
-                tbCmdParameter.place(x=320, y=80)
+                tbCmdParameter.place(x=620, y=80)
             else:
                 tbCmdParameter.place_forget()
 
         def cmdLoadMethod(choice):
-            print()
+            btnCmdEditor.configure(text="Edit", command=lambda: editLine())
+            btnCmdDelete.configure(text="Delete Selected", command=lambda: delSelected())
 
         def loadCmdTable():
             if cbCmdMet.get():
@@ -814,7 +842,8 @@ class panel(ctk.CTkFrame):
             code = row[2]
             parameter = row[3]
             info = row[4]
-            Tcomand.insert("","end", values=(name, code, parameter, info))
+            profil = row[5]
+            Tcomand.insert("","end", values=(name, code, parameter, info, profil))
 
 
     def addInstrument(self):
@@ -1037,7 +1066,7 @@ class panel(ctk.CTkFrame):
 
         Tcomand = ttk.Treeview(
             wadd,
-            columns=("name", "code", "parameter", "info"),
+            columns=("name", "code", "parameter", "info", "profil"),
             show="headings"
         )
 
@@ -1045,6 +1074,13 @@ class panel(ctk.CTkFrame):
         Tcomand.heading("code", text="code")
         Tcomand.heading("parameter", text="parameter")
         Tcomand.heading("info", text="info")
+        Tcomand.heading("profil", text="profil")
+
+        Tcomand.column("name", width=100, anchor="center")
+        Tcomand.column("code", width=50, anchor="center")
+        Tcomand.column("parameter", width=100, anchor="center")
+        Tcomand.column("info", width=150, anchor="center")
+        Tcomand.column("profil", width=100, anchor="center")
 
         self.reloadCom(Tcomand)
 
@@ -1099,13 +1135,19 @@ class panel(ctk.CTkFrame):
         swPar.place(x= 780, y=423)
         
         ctk.CTkLabel(wadd, text="info: ", font=("Segoe UI", 16, "bold")).place(x=50, y=470)
-        tbinfo = ctk.CTkTextbox(wadd, width=740, height=20, border_width=2, border_color="#1492c4")
+        tbinfo = ctk.CTkTextbox(wadd, width=470, height=20, border_width=2, border_color="#1492c4")
         tbinfo.place(x=100, y=470)
+        ctk.CTkLabel(wadd, text="profil: ", font=("Segoe UI", 16, "bold")).place(x=600, y=470)
+        profiles = getProfilName()
+        cbProfil = ctk.CTkComboBox(wadd, width=180, height=30, values=profiles, state="readonly")
+        cbProfil.place(x=660, y=470)
+
 
         tbComName.configure(state="disabled",  border_color="#cc1a0d") 
         tbCode.configure(state="disabled", border_color="#cc1a0d")
         swPar.configure(state="disabled", border_color="#cc1a0d")
         tbinfo.configure(state="disabled", border_color="#cc1a0d")
+        cbProfil.configure(state="disabled", border_color="#cc1a0d")
         
         btnDelete = ctk.CTkButton(wadd, text="Delete All", font=("Segoe UI", 16, "bold"), command=lambda: deleteAll(), width=370, text_color_disabled="white", fg_color="red", hover_color="#610000", text_color="white")
         btnDelete.place(x=65, y=520)
@@ -1127,6 +1169,7 @@ class panel(ctk.CTkFrame):
             tbCode.configure(state="disabled", border_color="#cc1a0d")
             swPar.configure(state="disabled", border_color="#cc1a0d")
             tbinfo.configure(state="disabled", border_color="#cc1a0d")
+            cbProfil.configure(state="disabled", border_color="#cc1a0d")
             btnComCancel.place_forget()
             btnClearCom.configure(width=770)
 
@@ -1150,11 +1193,12 @@ class panel(ctk.CTkFrame):
                     Fname = tbComName.get("1.0", "end").strip()
                     Fcode = tbCode.get("1.0", "end").strip()
                     Finfo = tbinfo.get("1.0", "end").strip()    
+                    Fprofil = cbProfil.get().strip()
                     EditMode["value"] = False
-                    if Fname and Fcode and Finfo:
+                    if Fname and Fcode and Finfo and Fprofil:
                         codeValues = Tcomand.item(Tcomand.selection()[0], "values")
 
-                        updateCommands(Fname, Fcode, swPar.get(), Finfo, self.currentId)
+                        updateCommands(Fname, Fcode, swPar.get(), Finfo, Fprofil, self.currentId)
 
                         if commandsCountByName(Fname) > 1:
                             updateCommands(codeValues[0], codeValues[1], codeValues[2], codeValues[3], self.currentId) 
@@ -1180,6 +1224,7 @@ class panel(ctk.CTkFrame):
                 tbCode.configure(state="normal", border_color="#1492c4")
                 swPar.configure(state="normal", border_color="#1492c4")
                 tbinfo.configure(state="normal", border_color="#1492c4")
+                cbProfil.configure(state="normal", border_color="#1492c4")
                 btnNew.configure(text="Save")
                 btnClearCom.configure(width=370)
                 btnComCancel.place(x=465, y=560)
@@ -1204,6 +1249,7 @@ class panel(ctk.CTkFrame):
                         
                     tbinfo.delete("1.0", "end")
                     tbinfo.insert("1.0", codeValues[3]) 
+                    cbProfil.set(codeValues[4])
 
 
          
@@ -1215,16 +1261,18 @@ class panel(ctk.CTkFrame):
                     Fname = tbComName.get("1.0", "end").strip()
                     Fcode = tbCode.get("1.0", "end").strip()
                     Finfo = tbinfo.get("1.0", "end").strip()    
+                    Fprofil = cbProfil.get().strip()
                     mode["value"] = False
                     if commandsCountByName(Fname) == 0:
-                        if Fname and Fcode and Finfo :
-                            addCommands(Fname,Fcode, swPar.get(), Finfo)
+                        if Fname and Fcode and Finfo and Fprofil:
+                            addCommands(Fname,Fcode, swPar.get(), Finfo, Fprofil)
                             self.reloadCom(Tcomand)
                             clearTb()
                             tbComName.configure(state="disabled",  border_color="#cc1a0d") 
                             tbCode.configure(state="disabled", border_color="#cc1a0d")
                             swPar.configure(state="disabled", border_color="#cc1a0d")
                             tbinfo.configure(state="disabled", border_color="#cc1a0d")
+                            cbProfil.configure(state="disabled", border_color="#cc1a0d")
                             btnClearCom.configure(width=770)
                             btnComCancel.place_forget()
                         else:
@@ -1239,6 +1287,7 @@ class panel(ctk.CTkFrame):
                 tbCode.configure(state="normal", border_color="#1492c4")
                 swPar.configure(state="normal", border_color="#1492c4")
                 tbinfo.configure(state="normal", border_color="#1492c4")       
+                cbProfil.configure(state="normal", border_color="#1492c4")       
                 btnClearCom.configure(width=370)
                 btnComCancel.place(x=465, y=560)
                 btnNew.configure(text="Save")
@@ -1248,6 +1297,7 @@ class panel(ctk.CTkFrame):
             tbCode.delete("1.0", "end")
             tbinfo.delete("1.0", "end")
             swPar.deselect()
+            cbProfil.set("")
 
         def deleteSelected():
             if self.currentId != -1:

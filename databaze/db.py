@@ -47,6 +47,7 @@ def createTables():
             code TEXT,
             parameter INTEGER,
             info TEXT
+            profil TEXT DEFAULT NULL
         )
     """)
 
@@ -251,13 +252,21 @@ def deleteInstrument(name):
     conn.commit()
     conn.close()
 
-def addCommands(name,code ,parameter ,info ):
+def addCommandColumn():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("""        
+        ALTER TABLE commands
+        ADD COLUMN profil TEXT DEFAULT NULL
+    """)
+
+def addCommands(name,code ,parameter ,info, profil):
     conn = connect()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO commands (name, code, parameter, info)
-        VALUES (?,?,?,?)
-    """, (name, code, parameter, info))
+        INSERT INTO commands (name, code, parameter, info, profil)
+        VALUES (?,?,?,?,?)
+    """, (name, code, parameter, info, profil))
     conn.commit()
     conn.close()
 
@@ -296,6 +305,14 @@ def getCommandsName():
     conn.close()
     return [(row[0] + str(row[1])) for row in rows]
 
+def getCommandsNameByProfil(profil):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, parameter FROM commands WHERE profil = ?", (profil,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [(row[0] + str(row[1])) for row in rows]
+
 def getCommandsId(name):
     conn = connect()
     cursor = conn.cursor()
@@ -319,14 +336,14 @@ def deleteCommand(id):
     conn.commit()
     conn.close()
 
-def updateCommands(name, code, parameter, info, commandId):
+def updateCommands(name, code, parameter, info, profil, commandId):
     conn = connect()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE commands
-        SET name = ?, code = ?, parameter = ?, info = ?
+        SET name = ?, code = ?, parameter = ?, info = ?, profil = ?
         WHERE id = ?   
-        """, (name, code, parameter, info, commandId))
+        """, (name, code, parameter, info, profil, commandId))
     conn.commit()
     conn.close()
 
