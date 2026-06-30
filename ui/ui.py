@@ -693,10 +693,11 @@ class panel(ctk.CTkFrame):
         fcmd.place(x=30, y=240)
 
 
-        columns = ("time", "state", "description", "instrument", "command", "parameter", "code")
+        columns = ("id","time", "state", "description", "instrument", "command", "parameter", "code")
 
         tcmd = ttk.Treeview(fcmd, columns=columns, show="headings", height=23)
 
+        tcmd.heading("id", text="id")
         tcmd.heading("time", text="time")
         tcmd.heading("state", text="state")
         tcmd.heading("description", text="description")
@@ -705,6 +706,7 @@ class panel(ctk.CTkFrame):
         tcmd.heading("parameter", text="parameter")
         tcmd.heading("code", text="code")
 
+        tcmd.column("id", width=50)
         tcmd.column("time", width=150)
         tcmd.column("state", width=200)
         tcmd.column("description", width=100)
@@ -751,7 +753,7 @@ class panel(ctk.CTkFrame):
         btnCmdClearSel = ctk.CTkButton(self.tabview.tab(texts[2]), height=30,width=160, command=lambda:cmdClearSel(),font=("Segoe UI", 16, "bold"), text="Clear Selection")
         btnCmdClearSel.place(x=1080, y=80)
 
-        btnCmdCancel =  ctk.CTkButton(self.tabview.tab(texts[2]), height=30,width=160, command=lambda:cancelCmd(),font=("Segoe UI", 16, "bold"), text="Clear Selection")
+        btnCmdCancel =  ctk.CTkButton(self.tabview.tab(texts[2]), height=30,width=160, command=lambda:cancelCmd(),font=("Segoe UI", 16, "bold"), text="Cancel")
 
         tbCmdTime.configure(state="disabled", border_color="#cc1a0d")
         cbCmdStates.configure(state="disabled", border_color="#cc1a0d")
@@ -763,14 +765,21 @@ class panel(ctk.CTkFrame):
             print()
 
         def cancelCmd():
-            print()
+            clearCmdIn()   
+            btnCmdCancel.place_forget()
+            lineMode["value"] = False
+            tbCmdTime.configure(state="disabled", border_color="#cc1a0d")
+            cbCmdStates.configure(state="disabled", border_color="#cc1a0d")
+            tbCmdInfo.configure(state="disabled", border_color="#cc1a0d")
+            cbCmdIns.configure(state="disabled", border_color="#cc1a0d")
+            cbCmdCommands.configure(state="disabled", border_color="#cc1a0d")
 
         def clearCmdIn():
             tbCmdTime.delete("1.0", "end")
             cbCmdStates.set("")
             tbCmdInfo.delete("1.0", "end")
             cbCmdIns.set("")
-            cbCmdCommands.set("`")
+            cbCmdCommands.set("")
 
         def addLine():
             if cbCmdMet.get() != None:
@@ -799,44 +808,123 @@ class panel(ctk.CTkFrame):
 
                         if method and info and time and instrument and command and code and state: 
                             addCmd(method, info, time, instrument, command, parameter, code, state)
+                            clearCmdIn()   
                             tbCmdTime.configure(state="disabled", border_color="#cc1a0d")
                             cbCmdStates.configure(state="disabled", border_color="#cc1a0d")
                             tbCmdInfo.configure(state="disabled", border_color="#cc1a0d")
                             cbCmdIns.configure(state="disabled", border_color="#cc1a0d")
-                            cbCmdCommands.configure(state="disabled", border_color="#cc1a0d")
-
+                            cbCmdCommands.configure(state="disabled", border_color="#cc1a0d") 
+                            btnEditor.configure(text="Add", command=lambda: addLine())
                             btnMetCancel.place_forget() 
                             loadCmdTable()
-                            clearCmdIn()
+
                         else:
                             tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to create a line")
                 else:
                     lineMode["value"] = True
+                    btnEditor.configure(text="Save")
                     tbCmdTime.configure(state="normal", border_color="#1492c4")
                     cbCmdStates.configure(state="normal", border_color="#1492c4")
                     tbCmdInfo.configure(state="normal", border_color="#1492c4")
                     cbCmdIns.configure(state="normal", border_color="#1492c4")
                     cbCmdCommands.configure(state="normal", border_color="#1492c4")
+                    btnCmdCancel.place(x=1080,y=120)
             else:
                 tk.messagebox.showwarning(title="Warning", message="Please select method when creating a line")
 
         def editLine():
-            if lineMode["value"]:
-                proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
-                if proceed:
-                    print()
-            else:
-                tbCmdTime.configure(state="normal", border_color="#1492c4")
-                cbCmdStates.configure(state="normal", border_color="#1492c4")
-                tbCmdInfo.configure(state="normal", border_color="#1492c4")
-                cbCmdIns.configure(state="normal", border_color="#1492c4")
-                cbCmdCommands.configure(state="normal", border_color="#1492c4")
+            if cbCmdMet.get() != None:
+                if lineMode["value"]:
+                    proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
+                    if proceed:
+                        lineMode["value"] = False
+                        method = cbCmdMet.get()
+                        info = tbCmdInfo.get("1.0", "end").strip()
+                        time = tbCmdTime.get("1.0", "end").strip()
+                        instrument = cbCmdIns.get()
+                        command = cbCmdCommands.get()
+                        par = bool(getCommandsPar(command))
+                        parameter = ""
+                        if par:
+                            parameter = int(tbCmdParameter.get("1.0", "end").strip())
 
+                        code = command + str(parameter)
+                        state = None 
+                        if cbCmdStates.get() == "Run":
+                            state = 1
+                        elif cbCmdStates.get() == "Pause":
+                            state = 2
+                        elif cbCmdStates.get() == "Skip":
+                            state = 3
+
+                        if method and info and time and instrument and command and code and state: 
+                            id = getCmdId()
+                            if id == False:
+                                tk.messagebox.showwarning(title="Warning", message="no line sellected")
+                                return
+                            updateCmd(method, info, time, instrument,command,parameter, code, state, id)
+                            clearCmdIn()   
+                            tbCmdTime.configure(state="disabled", border_color="#cc1a0d")
+                            cbCmdStates.configure(state="disabled", border_color="#cc1a0d")
+                            tbCmdInfo.configure(state="disabled", border_color="#cc1a0d")
+                            cbCmdIns.configure(state="disabled", border_color="#cc1a0d")
+                            cbCmdCommands.configure(state="disabled", border_color="#cc1a0d")
+                            btnEditor.configure(text="Add", command=lambda: addLine())
+                            btnCmdCancel.place_forget() 
+                            loadCmdTable()
+
+                        else:
+                            tk.messagebox.showwarning(title="Warning", message="all inputs must be filled in to edit a line")
+                else:
+                    id = getCmdId()
+                    if id == False:
+                        tk.messagebox.showwarning(title="Warning", message="no line sellected")
+                        return
+                    lineMode["value"] = True
+                    btnCmdCancel.place(x=1200, y=120)
+                    tbCmdTime.configure(state="normal", border_color="#1492c4")
+                    cbCmdStates.configure(state="normal", border_color="#1492c4")
+                    tbCmdInfo.configure(state="normal", border_color="#1492c4")
+                    cbCmdIns.configure(state="normal", border_color="#1492c4")
+                    cbCmdCommands.configure(state="normal", border_color="#1492c4")
+                    btnEditor.configure(text="Save")
+
+                    row = getCmdById(id)
+
+                    tbCmdTime.delete("1.0", "end")
+                    tbCmdTime.insert("1.0", str(row[3]))
+                    text = None
+                    if row[8] == 1:
+                        text = "Run"
+                    elif row[8] == 2:
+                        text = "Pause"
+                    elif row[8] == 3:
+                        text = "Skip"
+                    cbCmdStates.set(text)
+                    tbCmdInfo.delete("1.0", "end")
+                    tbCmdInfo.insert("1.0", row[2])
+                    cbCmdIns.set(row[4])
+                    cbCmdCommands.set(row[5])
+                    par = bool(getCommandsPar(row[5]))
+                    if par:
+                        tbCmdParameter.delete("1.0", "end")
+                        tbCmdParameter.insert("1.0", row[6])
+            else:
+                tk.messagebox.showwarning(title="Warning", message="Please select method when editinng a line")
         def delAll():
             print()
 
         def delSelected():
             print()
+
+        def getCmdId():
+            selected = tcmd.selection()
+
+            if selected:
+                values = tcmd.item(selected[0], "values")
+                return values[0]
+            else:
+                return False
 
         def loadCmdCommands(choice):
             par = getCommandsPar(choice)
@@ -855,6 +943,7 @@ class panel(ctk.CTkFrame):
                 rows = getCmdByMethod(cbCmdMet.get().strip()) 
 
                 for row in rows:
+                    id = row[0]
                     description = row[2]
                     time = row[3]
                     instrument = row[4]
@@ -862,10 +951,16 @@ class panel(ctk.CTkFrame):
                     parameter = row[6]
                     code = row[7]
                     state = row[8]
-                    tcmd.insert("","end", values=(time,state,description, instrument, command, parameter,code))
+                    tcmd.insert("","end", values=(id, time,state,description, instrument, command, parameter,code))
 
         loadCmdTable()
 
+        def tcmdChange(event):
+            btnCmdEditor.configure(text="Edit", command=lambda: editLine())
+            btnCmdDelete.configure(text="Delete Selected", command=lambda: delSelected())
+        
+
+        tcmd.bind("<<TreeviewSelect>>", tcmdChange)
 
     def preferences(self):
         pref = ctk.CTkToplevel(self)

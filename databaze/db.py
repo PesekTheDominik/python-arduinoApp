@@ -457,6 +457,13 @@ def getCmdByMethod(method):
     conn.close()
     return rows
 
+def getCmdById(id):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM cmdLines WHERE id = ?", (id,))
+    return cursor.fetchone()
+    conn.close()
+
 def addCmd(method, info, time, instrument, command, parameter, code, state):
     conn = connect()
     cursor = conn.cursor()
@@ -465,6 +472,17 @@ def addCmd(method, info, time, instrument, command, parameter, code, state):
         VALUES (?,?,?,?,?,?,?,?)
     """, (method, info, time, instrument, command, parameter, code, state))
 
+    conn.commit()
+    conn.close()
+
+def updateCmd(method, info, time, instrument, command, parameter, code, state, id):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE cmdLines
+        SET method = ?, info = ?, time = ?, instrument = ?, command = ?, parameter = ?, code = ?, timeout = ?
+        WHERE id = ?
+    """, (method, info, time, instrument, command, parameter, code, state, id))
     conn.commit()
     conn.close()
 
