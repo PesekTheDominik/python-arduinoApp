@@ -486,6 +486,20 @@ def updateCmd(method, info, time, instrument, command, parameter, code, state, i
     conn.commit()
     conn.close()
 
+def deleteAllCmd(met):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM cmdLines WHERE method = ?", (met,))
+    conn.commit()
+    conn.close()
+
+def deleteSelCmd(id):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM cmdLines WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+
 def addLog(method ,executed ,info ,time,instrument,command ,parameter ,code ,response):
     conn = connect()
     cursor = conn.cursor()
@@ -493,6 +507,5 @@ def addLog(method ,executed ,info ,time,instrument,command ,parameter ,code ,res
         INSERT INTO log (method ,executed ,info ,time,instrument,command ,parameter ,code ,response)
         VALUES (?,?,?,?,?,?,?,?,?)
     """, (method ,executed ,info, time, instrument,command ,parameter ,code ,response))
-
     conn.commit()
     conn.close()

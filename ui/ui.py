@@ -242,6 +242,7 @@ class panel(ctk.CTkFrame):
                 
     
         def loadProfil(choice):
+            global SelectedProfil
             profil = getProfilByName(choice)
             SelectedProfil = profil[1]
             tbName.delete("1.0", "end")
@@ -684,6 +685,7 @@ class panel(ctk.CTkFrame):
 
         #--------------------------tab 3----------------------------------------------#
         lineMode = {"value":False}
+
         fcmd = ctk.CTkFrame(
             self.tabview.tab(texts[2]),
             width=1500,
@@ -706,14 +708,14 @@ class panel(ctk.CTkFrame):
         tcmd.heading("parameter", text="parameter")
         tcmd.heading("code", text="code")
 
-        tcmd.column("id", width=50)
-        tcmd.column("time", width=150)
-        tcmd.column("state", width=200)
-        tcmd.column("description", width=100)
-        tcmd.column("instrument", width=150)
-        tcmd.column("command", width=150)
+        tcmd.column("id", width=70)
+        tcmd.column("time", width=170)
+        tcmd.column("state", width=100)
+        tcmd.column("description", width=250)
+        tcmd.column("instrument", width=170)
+        tcmd.column("command", width=170)
         tcmd.column("parameter", width=150)
-        tcmd.column("code", width=150)
+        tcmd.column("code", width=170)
 
         tcmd.pack(side="left", fill="both", expand=True)
 
@@ -749,7 +751,7 @@ class panel(ctk.CTkFrame):
         btnCmdEditor = ctk.CTkButton(self.tabview.tab(texts[2]), height=30,width=160, command=lambda: addLine(),font=("Segoe UI", 16, "bold"), text="Add")
         btnCmdEditor.place(x=740, y=80)
         btnCmdDelete = ctk.CTkButton(self.tabview.tab(texts[2]), height=30,width=160, command=lambda: delAll(),font=("Segoe UI", 16, "bold"), text="Delete All")
-        btnCmdDelete.place(x=910, y=80)
+
         btnCmdClearSel = ctk.CTkButton(self.tabview.tab(texts[2]), height=30,width=160, command=lambda:cmdClearSel(),font=("Segoe UI", 16, "bold"), text="Clear Selection")
         btnCmdClearSel.place(x=1080, y=80)
 
@@ -762,7 +764,10 @@ class panel(ctk.CTkFrame):
         cbCmdCommands.configure(state="disabled", border_color="#cc1a0d")
 
         def cmdClearSel():
-            print()
+            cbCmdMet.set("")
+            btnCmdDelete.configure(text="Delete All")
+            btnCmdDelete.place_forget()
+            loadCmdTable()
 
         def cancelCmd():
             clearCmdIn()   
@@ -782,7 +787,8 @@ class panel(ctk.CTkFrame):
             cbCmdCommands.set("")
 
         def addLine():
-            if cbCmdMet.get() != None:
+            global SelectedProfil
+            if cbCmdMet.get() != "":
                 if lineMode["value"]:
                     proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
                     if proceed:
@@ -793,11 +799,11 @@ class panel(ctk.CTkFrame):
                         instrument = cbCmdIns.get()
                         command = cbCmdCommands.get()
                         par = bool(getCommandsPar(command))
-                        parameter = None
+                        parameter = "" 
                         if par:
                             parameter = int(tbCmdParameter.get("1.0", "end").strip())
 
-                        code = command + str(parameter)
+                        code = getCommandCode(command) + str(parameter)
                         state = None 
                         if cbCmdStates.get() == "Run":
                             state = 1
@@ -823,16 +829,21 @@ class panel(ctk.CTkFrame):
                 else:
                     lineMode["value"] = True
                     btnEditor.configure(text="Save")
+                    commands = [c[:-1] for c in getCommandsNameByProfil(SelectedProfil)]
+                    
+                    cbCmdCommands.configure(values=commands)
                     tbCmdTime.configure(state="normal", border_color="#1492c4")
                     cbCmdStates.configure(state="normal", border_color="#1492c4")
                     tbCmdInfo.configure(state="normal", border_color="#1492c4")
                     cbCmdIns.configure(state="normal", border_color="#1492c4")
                     cbCmdCommands.configure(state="normal", border_color="#1492c4")
+
                     btnCmdCancel.place(x=1080,y=120)
             else:
                 tk.messagebox.showwarning(title="Warning", message="Please select method when creating a line")
 
         def editLine():
+            global SelectedProfil
             if cbCmdMet.get() != None:
                 if lineMode["value"]:
                     proceed = tk.messagebox.askyesno(title="Warning", message="Do you wish to proceede")
@@ -848,7 +859,7 @@ class panel(ctk.CTkFrame):
                         if par:
                             parameter = int(tbCmdParameter.get("1.0", "end").strip())
 
-                        code = command + str(parameter)
+                        code = getCommandCode(command) + str(parameter)
                         state = None 
                         if cbCmdStates.get() == "Run":
                             state = 1
@@ -881,7 +892,7 @@ class panel(ctk.CTkFrame):
                         tk.messagebox.showwarning(title="Warning", message="no line sellected")
                         return
                     lineMode["value"] = True
-                    btnCmdCancel.place(x=1200, y=120)
+                    btnCmdCancel.place(x=1080, y=120)
                     tbCmdTime.configure(state="normal", border_color="#1492c4")
                     cbCmdStates.configure(state="normal", border_color="#1492c4")
                     tbCmdInfo.configure(state="normal", border_color="#1492c4")
@@ -889,6 +900,9 @@ class panel(ctk.CTkFrame):
                     cbCmdCommands.configure(state="normal", border_color="#1492c4")
                     btnEditor.configure(text="Save")
 
+                    commands = [c[:-1] for c in getCommandsNameByProfil(SelectedProfil)]
+                    
+                    cbCmdCommands.configure(values=commands)
                     row = getCmdById(id)
 
                     tbCmdTime.delete("1.0", "end")
@@ -912,10 +926,18 @@ class panel(ctk.CTkFrame):
             else:
                 tk.messagebox.showwarning(title="Warning", message="Please select method when editinng a line")
         def delAll():
-            print()
+            if cbCmdMet.get() != "":
+                deleteAllCmd(cbCmdMet.get())    
+                loadCmdTable()
+            else:
+                tk.messagebox.showwarning(title="Warning", message="You need to select method when deleting lines")
 
         def delSelected():
-            print()
+            if cbCmdMet.get() != "":
+                deleteSelCmd(getCmdId())
+                loadCmdTable()
+            else:
+                tk.messagebox.showwarning(title="Warning", message="You need to select method when deleting lines")
 
         def getCmdId():
             selected = tcmd.selection()
@@ -935,10 +957,12 @@ class panel(ctk.CTkFrame):
 
         def cmdLoadMethod(choice):
             loadCmdTable()
+            btnCmdDelete.place(x=910, y=80)
 
         def loadCmdTable():
-            if cbCmdMet.get():
+            if cbCmdMet.get() != "":
                 tcmd.delete(*tcmd.get_children())
+
 
                 rows = getCmdByMethod(cbCmdMet.get().strip()) 
 
@@ -952,6 +976,8 @@ class panel(ctk.CTkFrame):
                     code = row[7]
                     state = row[8]
                     tcmd.insert("","end", values=(id, time,state,description, instrument, command, parameter,code))
+            else:
+                tcmd.delete(*tcmd.get_children())
 
         loadCmdTable()
 
@@ -961,6 +987,98 @@ class panel(ctk.CTkFrame):
         
 
         tcmd.bind("<<TreeviewSelect>>", tcmdChange)
+
+        #--------------------------tab 4-------------------------------------------#
+
+        fRun = ctk.CTkFrame(
+            self.tabview.tab(texts[3]),
+            width=1500,
+            height=1200
+        )
+
+        fRun.place(x=30, y=240)
+
+
+        columns = ("id","time", "state", "description", "instrument", "command", "parameter", "code")
+
+        tRun = ttk.Treeview(fRun, columns=columns, show="headings", height=23)
+
+        tRun.heading("id", text="id")
+        tRun.heading("time", text="time")
+        tRun.heading("state", text="state")
+        tRun.heading("description", text="description")
+        tRun.heading("instrument", text="instrument")
+        tRun.heading("command", text="command")
+        tRun.heading("parameter", text="parameter")
+        tRun.heading("code", text="code")
+
+        tRun.column("id", width=70)
+        tRun.column("time", width=170)
+        tRun.column("state", width=100)
+        tRun.column("description", width=250)
+        tRun.column("instrument", width=170)
+        tRun.column("command", width=170)
+        tRun.column("parameter", width=150)
+        tRun.column("code", width=170)
+
+        tRun.pack(side="left", fill="both", expand=True)
+
+        scrollY = ttk.Scrollbar(fRun, orient="vertical", command=tcmd.yview)
+
+
+        tRun.configure(yscrollcommand=scrollY.set)
+
+        scrollY.place(x=1234, y=0, height=1000)
+
+        ctk.CTkLabel(self.tabview.tab(texts[3]), text="Select Method:", font=("Segoe UI", 16, "bold")).place(x=30, y=20)
+        runMethodNames = getMethodNames()
+        cbRunMet = ctk.CTkComboBox(self.tabview.tab(texts[3]), values=runMethodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: loadRunTable(choice),width=160, height=30)
+        cbRunMet.place(x=160, y=20)
+
+        btnStart = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: start(),font=("Segoe UI", 16, "bold"), text="Start")
+        btnStop = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: stop(),font=("Segoe UI", 16, "bold"), text="Stop")
+        btnPause = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: pause(),font=("Segoe UI", 16, "bold"), text="Pause")
+        btnReset = ctk.CTkButton(self.tabview.tab(texts[3]), height=50, width=300, command=lambda: reset(), font=("Segoe UI", 16, "bold"), text="Reset")
+        btnStart.place(x=30, y=150)
+        btnStop.place(x=350, y=150)
+        btnPause.place(x=670, y=150)
+        btnReset.place(x=990, y=150)
+        btnStart.configure(fg_color="green", hover_color="darkgreen")
+        btnStop.configure(fg_color="gray", state="disabled")
+        btnPause.configure(fg_color="gray", state="disabled")
+        btnReset.configure(fg_color="gray", state="disabled")
+
+        def start():
+            print()
+        
+        def stop():
+            print()
+        
+        def pause():
+            print()
+        
+        def reset():
+            print()
+
+        def loadRunTable(choice):
+            if cbRunMet.get() != "":
+                tRun.delete(*tRun.get_children())
+
+                rows = getCmdByMethod(cbRunMet.get().strip()) 
+
+                for row in rows:
+                    id = row[0]
+                    description = row[2]
+                    time = row[3]
+                    instrument = row[4]
+                    command = row[5]
+                    parameter = row[6]
+                    code = row[7]
+                    state = row[8]
+                    tRun.insert("","end", values=(id, time,state,description, instrument, command, parameter,code))
+            else:
+                tRun.delete(*tRun.get_children())
+ 
 
     def preferences(self):
         pref = ctk.CTkToplevel(self)
