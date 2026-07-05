@@ -6,6 +6,7 @@ import configparser
 from serial.tools import list_ports
 from databaze.db import *
 from arduino.arduino import *
+from dataclasses import dataclass
 
 def resource_path(relative_path):
     try:
@@ -990,6 +991,15 @@ class panel(ctk.CTkFrame):
 
         #--------------------------tab 4-------------------------------------------#
 
+        @dataclass
+        class sentMet:
+            running: bool
+            stoped: bool
+            paused: bool
+            currMes: int
+
+        lines = sentMet(False, False, False, 0)
+
         fRun = ctk.CTkFrame(
             self.tabview.tab(texts[3]),
             width=1500,
@@ -1029,36 +1039,64 @@ class panel(ctk.CTkFrame):
         tRun.configure(yscrollcommand=scrollY.set)
 
         scrollY.place(x=1234, y=0, height=1000)
+        tRun.bind("<Button-1>", lambda e: "break")
 
         ctk.CTkLabel(self.tabview.tab(texts[3]), text="Select Method:", font=("Segoe UI", 16, "bold")).place(x=30, y=20)
         runMethodNames = getMethodNames()
         cbRunMet = ctk.CTkComboBox(self.tabview.tab(texts[3]), values=runMethodNames, state="readonly",font=("Segoe UI", 16, "bold"),command=lambda choice: loadRunTable(choice),width=160, height=30)
         cbRunMet.place(x=160, y=20)
 
-        btnStart = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: start(),font=("Segoe UI", 16, "bold"), text="Start")
-        btnStop = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: stop(),font=("Segoe UI", 16, "bold"), text="Stop")
-        btnPause = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: pause(),font=("Segoe UI", 16, "bold"), text="Pause")
-        btnReset = ctk.CTkButton(self.tabview.tab(texts[3]), height=50, width=300, command=lambda: reset(), font=("Segoe UI", 16, "bold"), text="Reset")
+        btnStart = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: start(),font=("Segoe UI", 16, "bold"), text="Start", text_color="#2E2E2E")
+        btnStop = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: stop(),font=("Segoe UI", 16, "bold"), text="Stop", text_color="#2E2E2E")
+        btnPause = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: pause(),font=("Segoe UI", 16, "bold"), text="Pause", text_color="#2E2E2E")
+        btnReset = ctk.CTkButton(self.tabview.tab(texts[3]), height=50, width=300, command=lambda: reset(), font=("Segoe UI", 16, "bold"), text="Reset", text_color="#2E2E2E")
         btnStart.place(x=30, y=150)
         btnStop.place(x=350, y=150)
         btnPause.place(x=670, y=150)
         btnReset.place(x=990, y=150)
         btnStart.configure(fg_color="green", hover_color="darkgreen")
-        btnStop.configure(fg_color="gray", state="disabled")
-        btnPause.configure(fg_color="gray", state="disabled")
-        btnReset.configure(fg_color="gray", state="disabled")
+        btnStop.configure(fg_color="gray", state="disabled", hover_color="darkred")
+        btnPause.configure(fg_color="gray", state="disabled", hover_color="#B8860B")
+        btnReset.configure(fg_color="gray", state="disabled", hover_color="darkred")
+
+        def repeat():
+
+            self.after(1000, repeat)
+
+        repeat()
 
         def start():
-            print()
+            lines.running = True
+            lines.paused = False
+            lines.stoped = False
+            btnStart.configure(fg_color="gray", state="disabled", text="Start")
+            btnReset.configure(fg_color="gray", state="disabled")
+            btnPause.configure(fg_color="yellow", state="normal")
+            btnStop.configure(fg_color="red", state="normal")
         
         def stop():
-            print()
-        
+            lines.running = False
+            lines.paused = False
+            lines.stoped = True
+            btnStart.configure(fg_color="gray", state="disabled", text="Start")
+            btnPause.configure(fg_color="gray", state="disabled")   
+            btnStop.configure(fg_color="gray", state="disabled")
+            btnReset.configure(fg_color="red", state="normal")
+                
         def pause():
-            print()
+            lines.running = False
+            lines.paused = True
+            lines.stoped = False
+            btnStart.configure(fg_color="green", state="normal", text="Resume")
+            btnPause.configure(fg_color="gray", state="disabled")            
+            btnStop.configure(fg_color="red", state="normal")
+            btnReset.configure(fg_color="gray", state="disabled")
         
         def reset():
-            print()
+            btnStart.configure(fg_color="green", hover_color="darkgreen", state="normal")
+            btnStop.configure(fg_color="gray", state="disabled", hover_color="darkred")
+            btnPause.configure(fg_color="gray", state="disabled", hover_color="#B8860B")
+            btnReset.configure(fg_color="gray", state="disabled", hover_color="darkred")
 
         def loadRunTable(choice):
             if cbRunMet.get() != "":
