@@ -997,8 +997,9 @@ class panel(ctk.CTkFrame):
             stoped: bool
             paused: bool
             currMes: int
+            currTime: int
 
-        lines = sentMet(False, False, False, 0)
+        lines = sentMet(False, False, False, 0, 0)
 
         fRun = ctk.CTkFrame(
             self.tabview.tab(texts[3]),
@@ -1059,21 +1060,51 @@ class panel(ctk.CTkFrame):
         btnPause.configure(fg_color="gray", state="disabled", hover_color="#B8860B")
         btnReset.configure(fg_color="gray", state="disabled", hover_color="darkred")
 
+        ctk.CTkLabel(self.tabview.tab(texts[3]), text="Time", font=("Segoe UI", 16, "bold")).place(x=150, y=60)
+        ctk.CTkLabel(self.tabview.tab(texts[3]), text="Time until next", font=("Segoe UI", 16, "bold")).place(x=600, y=60)
+        ctk.CTkLabel(self.tabview.tab(texts[3]), text="Pause Time", font=("Segoe UI", 16, "bold")).place(x=1050, y=60)
+
+        runTime = ctk.CTkLabel(self.tabview.tab(texts[3]), text="00:00:00", font=("Segoe UI", 16, "bold"), fg_color=("black", "white"), text_color=("white", "black"), width=60, height=30, corner_radius=5)
+        runTime.place(x=149, y=90)
+        timeTNext = ctk.CTkLabel(self.tabview.tab(texts[3]), text="00:00:00", font=("Segoe UI", 16, "bold"), fg_color=("black", "white"), text_color=("white", "black"), width=60, height=30, corner_radius=5)
+        timeTNext.place(x=620, y=90)
+        PauseTime = ctk.CTkLabel(self.tabview.tab(texts[3]), text="00:00:00", font=("Segoe UI", 16, "bold"), fg_color=("black", "white"), text_color=("white", "black"), width=60, height=30, corner_radius=5)
+        PauseTime.place(x=1060, y=90)
+
         def repeat():
 
+            if lines.running:
+                lines.currTime = lines.currTime + 1
+                runTime.configure(text=formatTime(lines.currTime))
             self.after(1000, repeat)
 
         repeat()
 
+        def formatTime(seconds):
+            hr = seconds // 3600
+            min = (seconds % 3600) // 60
+            sec = seconds % 60
+
+            return f"{hr:02d}:{min:02d}:{sec:02d}"
+
         def start():
-            lines.running = True
-            lines.paused = False
-            lines.stoped = False
-            btnStart.configure(fg_color="gray", state="disabled", text="Start")
-            btnReset.configure(fg_color="gray", state="disabled")
-            btnPause.configure(fg_color="yellow", state="normal")
-            btnStop.configure(fg_color="red", state="normal")
-        
+            if tRun.get_children():
+                if lines.paused == True:
+                    lines.currTime = 0
+                Iid = tRun.get_children()[0]
+                tRun.selection_set(Iid)
+                tRun.focus(Iid)
+                tRun.see(Iid)
+                lines.running = True
+                lines.paused = False
+                lines.stoped = False
+                btnStart.configure(fg_color="gray", state="disabled", text="Start")
+                btnReset.configure(fg_color="gray", state="disabled")
+                btnPause.configure(fg_color="yellow", state="normal")
+                btnStop.configure(fg_color="red", state="normal")
+            else:
+                tk.messagebox.showwarning(title="Warning", message="No messages to send. Please select methods that have messages")
+            
         def stop():
             lines.running = False
             lines.paused = False
@@ -1082,6 +1113,7 @@ class panel(ctk.CTkFrame):
             btnPause.configure(fg_color="gray", state="disabled")   
             btnStop.configure(fg_color="gray", state="disabled")
             btnReset.configure(fg_color="red", state="normal")
+            tRun.selection_remove(tRun.selection())
                 
         def pause():
             lines.running = False
@@ -1093,6 +1125,7 @@ class panel(ctk.CTkFrame):
             btnReset.configure(fg_color="gray", state="disabled")
         
         def reset():
+            lines.currTime = 0
             btnStart.configure(fg_color="green", hover_color="darkgreen", state="normal")
             btnStop.configure(fg_color="gray", state="disabled", hover_color="darkred")
             btnPause.configure(fg_color="gray", state="disabled", hover_color="#B8860B")
