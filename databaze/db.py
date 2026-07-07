@@ -222,6 +222,14 @@ def updateInstrument(name, address, id):
     conn.commit()
     conn.close()
 
+def getInstrumentAddr(name):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT address FROM instrument WHERE name = ?", (name, ))
+    addr = cursor.fetchone()[0]
+    conn.close()
+    return addr
+
 def getInstrumentId(name):
     conn = connect()
     cursor = conn.cursor()

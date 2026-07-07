@@ -830,9 +830,7 @@ class panel(ctk.CTkFrame):
                 else:
                     lineMode["value"] = True
                     btnEditor.configure(text="Save")
-                    commands = [c[:-1] for c in getCommandsNameByProfil(SelectedProfil)]
                     
-                    cbCmdCommands.configure(values=commands)
                     tbCmdTime.configure(state="normal", border_color="#1492c4")
                     cbCmdStates.configure(state="normal", border_color="#1492c4")
                     tbCmdInfo.configure(state="normal", border_color="#1492c4")
@@ -901,9 +899,7 @@ class panel(ctk.CTkFrame):
                     cbCmdCommands.configure(state="normal", border_color="#1492c4")
                     btnEditor.configure(text="Save")
 
-                    commands = [c[:-1] for c in getCommandsNameByProfil(SelectedProfil)]
                     
-                    cbCmdCommands.configure(values=commands)
                     row = getCmdById(id)
 
                     tbCmdTime.delete("1.0", "end")
@@ -996,10 +992,12 @@ class panel(ctk.CTkFrame):
             running: bool
             stoped: bool
             paused: bool
+            mesIdx: int
             currMes: int
             currTime: int
+            pauseTime: int
 
-        lines = sentMet(False, False, False, 0, 0)
+        lines = sentMet(False, False, False, 0, 0, 0, 0)
 
         fRun = ctk.CTkFrame(
             self.tabview.tab(texts[3]),
@@ -1048,9 +1046,9 @@ class panel(ctk.CTkFrame):
         cbRunMet.place(x=160, y=20)
 
         btnStart = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: start(),font=("Segoe UI", 16, "bold"), text="Start", text_color="#2E2E2E")
-        btnStop = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: stop(),font=("Segoe UI", 16, "bold"), text="Stop", text_color="#2E2E2E")
-        btnPause = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: pause(),font=("Segoe UI", 16, "bold"), text="Pause", text_color="#2E2E2E")
-        btnReset = ctk.CTkButton(self.tabview.tab(texts[3]), height=50, width=300, command=lambda: reset(), font=("Segoe UI", 16, "bold"), text="Reset", text_color="#2E2E2E")
+        btnStop = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: stop(),font=("Segoe UI", 16, "bold"), text="Stop", text_color="#E4E4E4")
+        btnPause = ctk.CTkButton(self.tabview.tab(texts[3]), height=50,width=300, command=lambda: pause(),font=("Segoe UI", 16, "bold"), text="Pause", text_color="#1F1F1F")
+        btnReset = ctk.CTkButton(self.tabview.tab(texts[3]), height=50, width=300, command=lambda: reset(), font=("Segoe UI", 16, "bold"), text="Reset", text_color="#E2E2E2")
         btnStart.place(x=30, y=150)
         btnStop.place(x=350, y=150)
         btnPause.place(x=670, y=150)
@@ -1072,13 +1070,45 @@ class panel(ctk.CTkFrame):
         PauseTime.place(x=1060, y=90)
 
         def repeat():
-
             if lines.running:
-                lines.currTime = lines.currTime + 1
+                selected = tRun.selection()
+                if selected:
+                    itId = selected[0]
+                    values = tRun.item(itId, "values")
+                    message = formatMessage(values)
+                    if int(values[1]) - lines.currTime <= 0:
+                            item = selected[0]
+                            items = tRun.get_children()
+                            index = tRun.index(item)
+
+                            if index < len(items) - 1:
+                                nextItem = items[index + 1]
+                                tRun.selection_set(nextItem)
+                                tRun.focus(nextItem)
+                                tRun.see(nextItem)
+                            else:
+                                stop()
+                    timeTNext.configure(text=formatTime(int(values[1]) - lines.currTime))
                 runTime.configure(text=formatTime(lines.currTime))
+                lines.currTime = lines.currTime + 1
+            if lines.paused:
+                PauseTime.configure(text=formatTime(lines.pauseTime))
+                lines.pauseTime = lines.pauseTime + 1
             self.after(1000, repeat)
 
         repeat()
+
+        def formatMessage(val):
+            if val[2] == "2":
+                pause()
+                return False
+
+            if val[2] != "1":
+                return False
+            
+            address = getInstrumentAddr(val[4])
+            mes = val[7] + ";" + address
+            return mes
 
         def formatTime(seconds):
             hr = seconds // 3600
@@ -1089,12 +1119,12 @@ class panel(ctk.CTkFrame):
 
         def start():
             if tRun.get_children():
-                if lines.paused == True:
+                if lines.paused == False:
                     lines.currTime = 0
-                Iid = tRun.get_children()[0]
-                tRun.selection_set(Iid)
-                tRun.focus(Iid)
-                tRun.see(Iid)
+                    Iid = tRun.get_children()[0]
+                    tRun.selection_set(Iid)
+                    tRun.focus(Iid)
+                    tRun.see(Iid)
                 lines.running = True
                 lines.paused = False
                 lines.stoped = False
@@ -1116,6 +1146,7 @@ class panel(ctk.CTkFrame):
             tRun.selection_remove(tRun.selection())
                 
         def pause():
+            lines.pauseTime = 0
             lines.running = False
             lines.paused = True
             lines.stoped = False
@@ -1126,6 +1157,10 @@ class panel(ctk.CTkFrame):
         
         def reset():
             lines.currTime = 0
+            lines.pauseTime = 0
+            runTime.configure(text=formatTime(lines.currTime))
+            PauseTime.configure(text=formatTime(lines.pauseTime))
+            timeTNext.configure(text="00:00:00")
             btnStart.configure(fg_color="green", hover_color="darkgreen", state="normal")
             btnStop.configure(fg_color="gray", state="disabled", hover_color="darkred")
             btnPause.configure(fg_color="gray", state="disabled", hover_color="#B8860B")
