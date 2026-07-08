@@ -2,6 +2,8 @@ import serial
 import time
 
 class arduino:
+    ser = None
+
     def setUp(self, port, baudrate, timeout):
         self.port = port
         self.baudrate = baudrate

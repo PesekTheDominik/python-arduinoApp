@@ -1076,6 +1076,7 @@ class panel(ctk.CTkFrame):
                     itId = selected[0]
                     values = tRun.item(itId, "values")
                     message = formatMessage(values)
+                    connection.send(message)
                     if int(values[1]) - lines.currTime <= 0:
                             item = selected[0]
                             items = tRun.get_children()
@@ -1107,7 +1108,7 @@ class panel(ctk.CTkFrame):
                 return False
             
             address = getInstrumentAddr(val[4])
-            mes = val[7] + ";" + address
+            mes = str(val[7]) + ";" + str(address)
             return mes
 
         def formatTime(seconds):
@@ -1118,22 +1119,25 @@ class panel(ctk.CTkFrame):
             return f"{hr:02d}:{min:02d}:{sec:02d}"
 
         def start():
-            if tRun.get_children():
-                if lines.paused == False:
-                    lines.currTime = 0
-                    Iid = tRun.get_children()[0]
-                    tRun.selection_set(Iid)
-                    tRun.focus(Iid)
-                    tRun.see(Iid)
-                lines.running = True
-                lines.paused = False
-                lines.stoped = False
-                btnStart.configure(fg_color="gray", state="disabled", text="Start")
-                btnReset.configure(fg_color="gray", state="disabled")
-                btnPause.configure(fg_color="yellow", state="normal")
-                btnStop.configure(fg_color="red", state="normal")
+            if connection.checkCon():
+                if tRun.get_children():
+                    if lines.paused == False:
+                        lines.currTime = 0
+                        Iid = tRun.get_children()[0]
+                        tRun.selection_set(Iid)
+                        tRun.focus(Iid)
+                        tRun.see(Iid)
+                    lines.running = True
+                    lines.paused = False
+                    lines.stoped = False
+                    btnStart.configure(fg_color="gray", state="disabled", text="Start")
+                    btnReset.configure(fg_color="gray", state="disabled")
+                    btnPause.configure(fg_color="yellow", state="normal")
+                    btnStop.configure(fg_color="red", state="normal")
+                else:
+                    tk.messagebox.showwarning(title="Warning", message="No messages to send. Please select methods that have messages")
             else:
-                tk.messagebox.showwarning(title="Warning", message="No messages to send. Please select methods that have messages")
+                tk.messagebox.showwarning(title="Warning", message="You are not connected to an Arduino.")
             
         def stop():
             lines.running = False
