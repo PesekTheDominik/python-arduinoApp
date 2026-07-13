@@ -1188,7 +1188,78 @@ class panel(ctk.CTkFrame):
                     tRun.insert("","end", values=(id, time,state,description, instrument, command, parameter,code))
             else:
                 tRun.delete(*tRun.get_children())
- 
+
+        #--------------------------tab 5-------------------------------------------#
+                            
+        fLog = ctk.CTkFrame(
+            self.tabview.tab(texts[4]),
+            width=1500,
+            height=1200
+        )
+
+        fLog.place(x=30, y=240)
+
+
+        columns = ("Id","Date", "Method", "Action", "Info", "Time", "Instrument", "Command", "Parameter", "Code", "Response")
+
+        tLog = ttk.Treeview(fLog, columns=columns, show="headings", height=23)
+
+        tLog.heading("Id", text="Id")
+        tLog.heading("Date", text="Date")
+        tLog.heading("Method", text="Method")
+        tLog.heading("Action", text="Action")
+        tLog.heading("Info", text="Info")
+        tLog.heading("Time", text="Time")
+        tLog.heading("Instrument", text="Instrument")
+        tLog.heading("Command", text="Command")
+        tLog.heading("Parameter", text="Parameter")
+        tLog.heading("Code", text="Code")
+        tLog.heading("Response", text="Response")
+
+        tLog.column("Id", width=50)
+        tLog.column("Date", width=120)
+        tLog.column("Method", width=100)
+        tLog.column("Action", width=100)
+        tLog.column("Info", width=200)
+        tLog.column("Time", width=100)
+        tLog.column("Instrument", width=100)
+        tLog.column("Command", width=120)
+        tLog.column("Parameter", width=100)
+        tLog.column("Code", width=100)
+        tLog.column("Response", width=150)
+
+        tLog.pack(side="left", fill="both", expand=True)
+
+        scrollY = ttk.Scrollbar(fLog, orient="vertical", command=tLog.yview)
+
+        tLog.configure(yscrollcommand=scrollY.set)
+
+        scrollY.place(x=1234, y=0, height=1000)
+
+        ctk.CTkLabel(self.tabview.tab(texts[4]), text="Sort:", font=("Segoe UI", 16, "bold")).place(x=40, y=20)
+        Actions = ["All", "Start","Pause", "Stop", "Reset", "End Of Run"]
+        cbLogAction = ctk.CTkComboBox(self.tabview.tab(texts[4]), width=150, height=30, values=Actions, state="readonly")
+        cbLogAction.place(x=130, y=20)
+
+        def LoadLogTable():
+            tLog.delete(*tLog.get_children())
+
+            rows = getCmdByMethod(cbCmdMet.get().strip()) 
+
+            for row in rows:
+                id = row[0]
+                description = row[2]
+                time = row[3]
+                instrument = row[4]
+                command = row[5]
+                parameter = row[6]
+                code = row[7]
+                state = row[8]
+                tcmd.insert("","end", values=(id, time,state,description, instrument, command, parameter,code))
+
+        LoadLogTable()
+
+
 
     def preferences(self):
         pref = ctk.CTkToplevel(self)
